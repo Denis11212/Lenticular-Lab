@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lenticular Lab — DisplayXR / Odyssey 3D · стенд измерений</title>
+<style>
+:root{
+ --bg:#06080f;--surf:#101624;--surf2:#151d2e;--over:#1b2438;--line:#26314c;--line2:#37456a;
+ --tx:#eaeefa;--tx2:#a3aec8;--tx3:#72809f;
+ --cy:#22d3ee;--bl:#3b82f6;--mg:#ff2d78;--vi:#a78bfa;--gr:#a3e635;--am:#fbbf24;--rd:#ef4444;
+ --ok:#a3e635;--warn:#fbbf24;--bad:#ef4444;--info:#a78bfa;--r:12px;--sh:0 12px 34px rgba(0,0,0,.5)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 system-ui,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:
+ radial-gradient(1200px 760px at 10% -12%,rgba(34,211,238,.17),transparent 62%),
+ radial-gradient(1000px 640px at 94% -4%,rgba(255,45,120,.15),transparent 60%),
+ radial-gradient(1000px 760px at 58% 116%,rgba(167,139,250,.13),transparent 62%),
+ linear-gradient(180deg,#06080f,#0a0e19 58%,#06080f)}
+#bg:after{content:"";position:absolute;inset:-25%;opacity:.55;background:repeating-linear-gradient(102deg,rgba(255,255,255,.04) 0 1px,transparent 1px 10px);animation:drift 30s linear infinite}
+@keyframes drift{to{transform:translateX(10px)}}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:#0a0f1c;border-radius:9px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--cy),var(--vi));border-radius:9px;border:3px solid #0a0f1c}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--mg),var(--cy))}
+*{scrollbar-color:#3aa7c4 #0a0f1c;scrollbar-width:thin}
+#app{position:relative;z-index:1;height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding:10px}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);
+ background:linear-gradient(115deg,rgba(34,211,238,.12),rgba(167,139,250,.08) 45%,rgba(255,45,120,.12));animation:drop .5s ease both;flex-wrap:wrap}
+@keyframes drop{from{opacity:0;transform:translateY(-10px)}}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:38px;height:38px;border-radius:10px;flex:0 0 auto;position:relative;background:conic-gradient(from 205deg,var(--cy),var(--vi),var(--mg),var(--cy));box-shadow:0 0 20px rgba(34,211,238,.4)}
+.logo:after{content:"";position:absolute;inset:5px;border-radius:7px;background:#080d18;background-image:repeating-linear-gradient(102deg,var(--cy) 0 2px,transparent 2px 5px,var(--mg) 5px 7px,transparent 7px 10px)}
+h1{margin:0;font-size:17px;letter-spacing:.4px;white-space:nowrap}
+h1 small{display:block;font-size:11.5px;font-weight:400;color:var(--tx2);letter-spacing:.7px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--surf);border:1px solid var(--line);font:12.5px/1 ui-monospace,Consolas,monospace;color:var(--tx2);white-space:nowrap}
+.chip b{color:var(--tx)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--tx3)}
+.dot.live{background:var(--gr);box-shadow:0 0 9px var(--gr);animation:pulse 1.7s ease-in-out infinite}
+.dot.search{background:var(--am);box-shadow:0 0 9px var(--am)}
+@keyframes pulse{50%{opacity:.35}}
+.btn{cursor:pointer;border:1px solid var(--line2);background:var(--surf2);color:var(--tx);padding:8px 12px;border-radius:9px;font:13.5px/1.2 inherit;transition:.16s;white-space:nowrap}
+.btn:hover{background:var(--over);border-color:var(--cy);box-shadow:0 0 0 3px rgba(34,211,238,.14)}
+.btn:active{transform:translateY(1px)}
+.btn.pri{background:linear-gradient(120deg,var(--cy),var(--bl));border-color:transparent;color:#04121a;font-weight:700}
+.btn.mag{background:linear-gradient(120deg,var(--mg),#b5179e);border-color:transparent;color:#fff;font-weight:600}
+.btn.gh{background:transparent}
+.btn.sm{padding:5px 9px;font-size:12.5px;border-radius:8px}
+.btn.ico{padding:3px 7px;font-size:12px;border-radius:7px;line-height:1.3}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+main{display:grid;grid-template-columns:272px minmax(0,1fr) 372px;gap:10px;min-height:0}
+.panel{background:linear-gradient(180deg,var(--surf),#0d1320);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.panel>h2{margin:0;padding:11px 13px;font-size:12.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--tx2);border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(34,211,238,.12),transparent)}
+.panel>h2 em{display:block;font-style:normal;text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--tx3);margin-top:3px}
+.panel .body{padding:11px 13px;overflow:auto;min-height:0}
+#dock{animation:sl .5s .05s ease both}#ctrl{animation:sr .5s .1s ease both}
+@keyframes sl{from{opacity:0;transform:translateX(-16px)}}@keyframes sr{from{opacity:0;transform:translateX(16px)}}
+.search{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line2);background:#0a0f1e;color:var(--tx);font-size:14px;margin-bottom:9px}
+.cats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.cat{cursor:pointer;font-size:11.5px;padding:5px 9px;border-radius:999px;border:1px solid var(--line);background:#0c1220;color:var(--tx2)}
+.cat.on{background:linear-gradient(120deg,rgba(34,211,238,.28),rgba(167,139,250,.28));border-color:var(--cy);color:#fff}
+.tlist{display:flex;flex-direction:column;gap:4px}
+.titem{display:flex;gap:9px;align-items:center;padding:8px 10px;border-radius:9px;border:1px solid transparent;background:#0c1220;cursor:pointer;text-align:left;transition:.14s}
+.titem:hover{border-color:var(--line2);background:var(--over)}
+.titem.on{border-color:var(--cy);background:linear-gradient(100deg,rgba(34,211,238,.2),rgba(255,45,120,.13))}
+.tnum{font:11.5px/1 ui-monospace,monospace;color:var(--tx3);min-width:22px}
+.titem.on .tnum{color:var(--cy)}
+.tname{font-size:13.5px;line-height:1.3}
+.tname i{display:block;font-style:normal;font-size:11px;color:var(--tx3)}
+#stageWrap{display:flex;flex-direction:column;gap:9px;min-height:0}
+.stagebar{display:flex;align-items:center;gap:11px;padding:9px 13px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);flex-wrap:wrap}
+.stagebar .t{font-weight:700;font-size:15.5px}
+.stagebar .e{font-size:12px;color:var(--tx3);letter-spacing:.5px}
+.stagebar .h{margin-left:auto;font-size:13px;color:var(--am);text-align:right;max-width:56%}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;border-radius:var(--r);border:1px solid var(--line);background:linear-gradient(135deg,rgba(34,211,238,.1),rgba(255,45,120,.08)),#04060c}
+#frame{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+#gl{display:block;background:#000;will-change:transform;max-width:100%;max-height:100%}
+.stagefoot{display:flex;gap:10px;align-items:center;padding:8px 13px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);font:13px/1.4 ui-monospace,monospace;color:var(--tx2);flex-wrap:wrap}
+.stagefoot b{color:var(--tx)}
+#spark{display:block;width:200px;height:36px;border-radius:7px;background:#090e1a;border:1px solid var(--line);margin-left:auto}
+.ctl{padding:10px 0;border-bottom:1px dashed #1d2740}
+.ctl:last-child{border-bottom:0}
+.ctl .lab{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--tx2);margin-bottom:6px}
+.ctl .lab b{color:var(--tx);font-weight:600}
+.ctl .val{margin-left:auto;font:13px/1 ui-monospace,monospace;color:var(--cy)}
+.ctl .lab:before{content:"";width:7px;height:7px;border-radius:50%;background:#2a3450;flex:0 0 auto}
+.ctl.rel .lab:before{background:var(--gr);box-shadow:0 0 8px var(--gr)}
+.ctl .tools{display:flex;gap:4px;margin-left:6px}
+.pdesc{display:none;margin-top:7px;padding:9px 11px;border-radius:9px;border-left:3px solid var(--info);background:rgba(167,139,250,.12);font-size:12.8px;color:#dde3f5;line-height:1.5}
+.pdesc.on{display:block}
+.pdesc.run{border-left-color:var(--gr);background:rgba(163,230,53,.12)}
+.pdesc b{color:#fff}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:24px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:7px;border-radius:7px;background:linear-gradient(90deg,var(--cy),var(--vi),var(--mg))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-5.5px;border-radius:50%;background:#fff;border:3px solid var(--cy);box-shadow:0 0 11px rgba(34,211,238,.65)}
+input[type=range]::-moz-range-track{height:7px;border-radius:7px;background:linear-gradient(90deg,var(--cy),var(--vi),var(--mg))}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid var(--cy)}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.tog{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:#0c1220;border:1px solid var(--line);cursor:pointer;font-size:13px;flex:1 1 46%}
+.tog input{accent-color:var(--cy);width:16px;height:16px}
+.tog.on{border-color:var(--cy);background:rgba(34,211,238,.12)}
+select,input[type=number],input[type=text]{width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--line2);background:#0a0f1e;color:var(--tx);font-size:13.5px;font-family:inherit}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.hint{font-size:12.2px;color:var(--tx3);margin-top:5px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 11px;text-align:left;border-bottom:1px solid #1a2238}
+th{position:sticky;top:0;background:#0d1424;color:var(--tx2);font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;z-index:1}
+td.v{font-family:ui-monospace,monospace;color:var(--cy)}
+tr:hover td{background:#131b2c}
+.logbar{display:flex;gap:6px;align-items:center;padding:9px 11px;border-top:1px solid var(--line);background:#0d1424;flex-wrap:wrap}
+.logbar input[type=text]{flex:1;min-width:150px}
+.empty{padding:18px;color:var(--tx3);font-size:13.5px;text-align:center}
+.modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,12,.85)}
+.modal.on{display:flex;animation:fade .18s ease both}
+@keyframes fade{from{opacity:0}}
+.sheet{width:min(1080px,100%);max-height:90vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#131a2b,#0c1220);border:1px solid var(--line2);border-radius:16px;box-shadow:0 34px 90px rgba(0,0,0,.72);overflow:hidden}
+.sheet header{border:0;border-bottom:1px solid var(--line);border-radius:0;animation:none;background:linear-gradient(100deg,rgba(34,211,238,.15),rgba(255,45,120,.11))}
+.sheet .body{padding:17px 19px;overflow:auto}
+.sheet h3{margin:18px 0 9px;font-size:13.5px;letter-spacing:1px;text-transform:uppercase;color:var(--cy)}
+.sheet h3:first-child{margin-top:0}
+.sheet p{margin:0 0 11px;color:#d3daec;font-size:14.5px}
+.sheet ul{margin:0 0 11px;padding-left:19px;color:#d3daec;font-size:14.5px}
+.sheet li{margin-bottom:6px}
+.kbd{display:inline-block;padding:1px 7px;border-radius:5px;border:1px solid var(--line2);background:#0a0f1e;font:12px/1.6 ui-monospace,monospace;color:var(--cy)}
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:9px}
+.link{display:block;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1220;text-decoration:none;color:var(--tx);transition:.15s}
+.link:hover{border-color:var(--cy);background:var(--over);transform:translateY(-1px)}
+.link b{display:block;font-size:13.5px;margin-bottom:3px}
+.link span{font-size:12px;color:var(--tx3);line-height:1.4;display:block}
+.link em{font-style:normal;font-size:10.5px;color:var(--vi);letter-spacing:.6px;text-transform:uppercase}
+.note{padding:11px 13px;border-radius:10px;border-left:3px solid var(--info);background:rgba(167,139,250,.12);font-size:14px;color:#dee4f6;margin-bottom:13px;line-height:1.55}
+.note.ok{border-color:var(--ok);background:rgba(163,230,53,.12)}
+.note.warn{border-color:var(--warn);background:rgba(251,191,36,.12)}
+.note.bad{border-color:var(--bad);background:rgba(239,68,68,.12)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 15px;font:13.5px/1.5 ui-monospace,monospace;margin-bottom:13px}
+.kv b{color:var(--tx2);font-weight:500}.kv span{color:var(--cy)}
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font:12px/1.5 ui-monospace,monospace;border:1px solid var(--line2);color:var(--tx2)}
+.badge.ok{color:#d3f7a4;border-color:#41702c}.badge.warn{color:#ffe6ad;border-color:#7d5c14}.badge.bad{color:#ffc9c9;border-color:#7d2727}
+.acq{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.acq .btn{padding:15px;font-size:16px;font-weight:700}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(22px);z-index:80;background:linear-gradient(120deg,#16203a,#1d1830);border:1px solid var(--cy);padding:11px 17px;border-radius:11px;font-size:14px;box-shadow:0 14px 44px rgba(0,0,0,.65);opacity:0;pointer-events:none;transition:.25s;max-width:92vw}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.drawerBtn{display:none}
+body.photo #app>header,body.photo #dock,body.photo #ctrl,body.photo #logPanel,body.photo .stagebar,body.photo .stagefoot{display:none!important}
+body.photo #app{padding:0;gap:0;grid-template-rows:1fr}
+body.photo main{grid-template-columns:1fr;gap:0}
+body.photo #stage{border:0;border-radius:0;padding:0;background:#000}
+@media(max-width:1420px){main{grid-template-columns:240px minmax(0,1fr) 340px}}
+@media(max-width:1180px){
+ main{grid-template-columns:1fr}
+ #dock,#ctrl{position:fixed;top:0;bottom:0;width:352px;max-width:92vw;z-index:40;border-radius:0;transition:.25s;animation:none}
+ #dock{left:0;transform:translateX(-110%)}#ctrl{right:0;transform:translateX(110%)}
+ #dock.open,#ctrl.open{transform:none}
+ .drawerBtn{display:inline-block}.chips{width:100%;margin-left:0}
+}
+@media(max-width:660px){h1 small{display:none}.stagebar .h{display:none}#spark{width:130px}}
+</style></head>
+<body>
+<div id="bg"></div>
+<div id="app">
+ <header>
+  <button class="btn gh drawerBtn" id="bDock">☰</button>
+  <div class="brand"><div class="logo"></div><h1>LENTICULAR LAB<small>DisplayXR · Samsung Odyssey 3D · измерения и тесты</small></h1></div>
+  <div class="chips">
+   <span class="chip" id="cMode"><span class="dot"></span><b>init</b></span>
+   <span class="chip" id="cTrack">track <b>—</b></span>
+   <span class="chip" id="cDist">глаза <b>—</b></span>
+   <span class="chip" id="cIpd">IPD <b>—</b></span>
+   <span class="chip" id="cBuf">buf <b>—</b></span>
+   <span class="chip" id="cHz">Hz <b>—</b></span>
+   <button class="btn sm" id="bInfo">ℹ Тест</button>
+   <button class="btn sm pri" id="bRes">🔬 Разрешение · 8K/16K</button>
+   <button class="btn sm" id="bDist">📏 Дистанция</button>
+   <button class="btn sm" id="bLib">📚 Статьи</button>
+   <button class="btn sm" id="bHelp">?</button>
+   <button class="btn sm" id="bPhoto">🖼 Фото</button>
+   <button class="btn sm mag" id="bFs">⛶ Полный экран</button>
+   <button class="btn gh drawerBtn" id="bCtrl">⚙</button>
+  </div>
+ </header>
+ <main>
+  <aside class="panel" id="dock">
+   <h2>Тесты <span id="tCount" style="float:right;color:var(--tx3)"></span></h2>
+   <div class="body"><input class="search" id="q" type="text" placeholder="Поиск теста…"><div class="cats" id="cats"></div><div class="tlist" id="tlist"></div></div>
+  </aside>
+  <section id="stageWrap">
+   <div class="stagebar"><span class="t" id="sName">—</span><span class="e" id="sEn"></span><span class="h" id="sHelp"></span></div>
+   <div id="stage"><div id="frame"><canvas id="gl"></canvas></div></div>
+   <div class="stagefoot">
+    <span>d <b id="fD">—</b></span><span>≈ <b id="fAng">—</b></span><span>% <b id="fPct">—</b></span><span>z <b id="fZ">—</b></span>
+    <span id="fComfort" class="badge">—</span><canvas id="spark" width="400" height="72"></canvas>
+   </div>
+  </section>
+  <aside class="panel" id="ctrl">
+   <h2>Параметры сцены<em>↺ — заводское значение · ? — описание и живой показ, что делает ползунок</em></h2>
+   <div class="body" id="ctrlBody"></div>
+  </aside>
+ </main>
+ <section class="panel" id="logPanel" style="max-height:216px">
+  <h2>Журнал измерений <span style="float:right;color:var(--tx3)" id="logCount"></span></h2>
+  <div class="body" id="logBody" style="padding:0"></div>
+  <div class="logbar">
+   <button class="btn sm pri" id="bLog">＋ Записать текущее</button>
+   <input type="text" id="logNote" placeholder="Заметка: условия, что видно, камера и экспозиция…">
+   <button class="btn sm" id="bCopyMd">Копировать MD</button>
+   <button class="btn sm" id="bExpMd">.md</button>
+   <button class="btn sm" id="bExpJson">.json</button>
+   <button class="btn sm" id="bClear">Очистить</button>
+  </div>
+ </section>
+</div>
+
+<div class="modal" id="mInfo"><div class="sheet"><header><h1 id="iTitle" style="font-size:16px">Тест</h1><button class="btn sm" data-close style="margin-left:auto">Закрыть ✕</button></header><div class="body" id="iBody"></div></div></div>
+<div class="modal" id="mHelp"><div class="sheet"><header><h1 style="font-size:16px">Управление</h1><button class="btn sm" data-close style="margin-left:auto">Закрыть ✕</button></header><div class="body">
+ <h3>Клавиши</h3><div class="kv">
+ <b>← / →</b><span>предыдущий / следующий тест</span><b>1…9, 0</b><span>переход к тесту 1–10 (в «Стереоостроте» 1–4 = ответ)</span>
+ <b>↑ / ↓</b><span>параллакс d, с Shift — точный шаг</span><b>, / .</b><span>период решётки</span>
+ <b>S</b><span>поменять глаза</span><b>T</b><span>линза 2D/3D</span><b>P</b><span>look-around</span><b>Q</b><span>качество буфера</span>
+ <b>H</b><span>фото-режим</span><b>F</b><span>полный экран</span><b>L</b><span>записать замер</span><b>I</b><span>пояснение к тесту</span>
+ <b>R</b><span>сброс всех параметров</span><b>Esc</b><span>закрыть окно / отменить показ / выйти из фото</span></div>
+ <h3>Порядок работы</h3><ul>
+ <li>Сначала «Разделение глаз» и «Какой глаз какой» — убедиться, что стерео вообще работает и глаза не перепутаны.</li>
+ <li>Затем crosstalk и оптика решётки, после — <b>«Реальное разрешение»</b>: он даёт цифры, сколько вы теряете при переходе в 3D.</li>
+ <li>Для замеров разрешения поставьте качество буфера 2160p и включите фото-режим, чтобы интерфейс не мешал.</li>
+ <li>Каждый ползунок: ↺ возвращает заводское значение, ? открывает описание и на несколько секунд сам прогоняет параметр от минимума к максимуму.</li></ul>
+ <div class="note">Сцена — единственный «плетёный» элемент. Панели стоят вокруг неё, а не поверх, поэтому композитор не перекрывает стерео-тайл.</div>
+</div></div></div>
+<div class="modal" id="mLib"><div class="sheet"><header><h1 style="font-size:16px">Библиотека источников</h1><button class="btn sm" data-close style="margin-left:auto">Закрыть ✕</button></header><div class="body" id="libBody"></div></div></div>
+<div class="modal" id="mRes"><div class="sheet"><header><h1 style="font-size:16px">Реальное разрешение в стерео и запас на 8K / 16K</h1><button class="btn sm" data-close style="margin-left:auto">Закрыть ✕</button></header><div class="body" id="resBody"></div></div></div>
+<div class="modal" id="mDist"><div class="sheet"><header><h1 style="font-size:16px">Дистанция до глаз: откуда числа и калибровка</h1><button class="btn sm" data-close style="margin-left:auto">Закрыть ✕</button></header><div class="body">
+ <div class="note ok"><b>Коротко:</b> страница не измеряет расстояние сама. Она читает позы глаз из рантайма DisplayXR и переводит их из виртуальных единиц сцены в сантиметры.</div>
+ <h3>Цепочка данных</h3><ul>
+ <li><b>Камера монитора.</b> Стереопара ИК-камер снимает лицо, трекер считает положение обоих глаз. Samsung калибрует связку камера+панель на заводе и хранит данные экземпляра в отдельном чипе.</li>
+ <li><b>Плагин вендора.</b> displayxr-leia-plugin отдаёт позы в OpenXR-рантайм DisplayXR.</li>
+ <li><b>Браузер.</b> DisplayXR Browser передаёт их странице как <code>XRView.transform.position</code> для каждого глаза, каждый кадр.</li>
+ <li><b>Страница.</b> Берёт середину между глазами, делит на масштаб сцены и показывает сантиметры.</li></ul>
+ <h3>Нюанс: это не метры</h3>
+ <p>Рантайм масштабирует позы коэффициентом <code>m2v = virtualDisplayHeight / физическая высота canvas</code>. Сырое z — виртуальные единицы; реальные метры получаются делением на m2v.</p>
+ <div class="kv" id="distKV"></div>
+ <h3>Что не является живым измерением</h3><ul>
+ <li><b>nominalViewerM</b> — паспортная дистанция панели, используется без трекинга.</li>
+ <li><b>eyeSeparationM</b> — всегда значение по умолчанию; живое IPD считается здесь как расстояние между глазами.</li>
+ <li><b>searching</b> — «никто не отслеживается или панель в 2D», не обязательно потеря трекинга.</li></ul>
+ <h3>Калибровка</h3><p>Заводскую калибровку камера↔панель со страницы не изменить. Полезны три личные поправки: масштаб единиц (по рулетке), ваше IPD и постоянное смещение нуля.</p>
+ <div class="grid2" style="margin-bottom:11px">
+  <div><div class="hint">Реальная дистанция по рулетке, см</div><input type="number" id="calRef" value="70" min="20" max="250" step="0.5"></div>
+  <div><div class="hint">Поправка нуля, см</div><input type="number" id="calOff" value="0" min="-30" max="30" step="0.5"></div></div>
+ <div class="row" style="margin-bottom:13px"><button class="btn pri" id="bCalDo">Калибровать по рулетке</button><button class="btn" id="bCalOff">Применить поправку</button><button class="btn" id="bCalReset">Сбросить</button></div>
+ <div class="note warn">Калибровка живёт только в этом браузере и не меняет монитор. Перед замером сядьте ровно, откройте лицо, уберите прямой свет из камеры.</div>
+ <h3>Источники</h3><div class="links" id="distLinks"></div>
+</div></div></div>
+<div id="toast"></div>
+
+<script type="module">
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const CDN='https://cdn.jsdelivr.net/npm/@displayxr/inline3d@1.56.0/js/inline3d.js',EW=1920,LS='lenticular-lab-v6';
+const PARAMS=[
+ {k:'d',label:'Параллакс d',min:-400,max:400,step:.5,def:40,unit:'px',demo:'depth-ladder',desc:'Горизонтальный сдвиг между картинками для левого и правого глаза. Плюс — объект выходит перед стеклом (crossed), минус — уходит за него (uncrossed). Это главная ручка глубины: двигая её, вы видите, как объект отрывается от плоскости экрана.'},
+ {k:'period',label:'Период решётки / полос',min:1,max:24,step:.1,def:6,unit:'px',demo:'slant',desc:'Толщина пары «светлая+тёмная полоса» в тестовых решётках. Чем меньше период, тем тоньше полосы и тем ближе к пределу разрешения. В тесте «Окно ghosting» этот же ползунок задаёт ширину белого окна.'},
+ {k:'angle',label:'Угол полос (slant)',min:0,max:180,step:.1,def:60,unit:'°',demo:'slant',desc:'Наклон тестовых полос. Совместите его с наклоном линз монитора — муар станет крупным и контрастным, так измеряют slant решётки. Также задаёт направление линз в модели пикселей.'},
+ {k:'density',label:'Плотность точек RDS',min:600,max:14000,step:100,def:4200,unit:'точек',demo:'rds',desc:'Сколько случайных точек в стереограмме. Мало точек — фигуру можно угадать одним глазом; много — фигура видна только бинокулярно, и тест становится честным.'},
+ {k:'dotSize',label:'Размер точки',min:1,max:6,step:.5,def:2,unit:'px',demo:'rds',desc:'Крупность зерна стереограммы. Мелкие точки повышают потенциальную остроту, но сильнее страдают от размытия линзы — так видно предел оптики.'},
+ {k:'level',label:'Яркость поля',min:0,max:255,step:1,def:200,unit:'/255',demo:'xt-field',desc:'Яркость белого в тестах утечки. lowering яркости позволяет найти порог, при котором призрак чужого глаза перестаёт быть заметен.'},
+ {k:'speed',label:'Скорость анимации',min:0,max:2,step:.05,def:1,unit:'×',demo:'tracking',desc:'Темп движения мишеней. Медленно — удобно ловить момент двоения; быстро — видно запаздывание трекинга и рывки.'},
+ {k:'fontScale',label:'Шрифт в сцене',min:.8,max:3,step:.05,def:1.6,unit:'×',demo:'clarity',desc:'Масштаб всех надписей внутри стерео-сцены. В 3D эффективное разрешение ниже, поэтому подписи имеют смысл делать крупнее — этот ползунок именно для этого.'},
+ {k:'ipdMM',label:'Ваше IPD',min:45,max:80,step:.5,def:63,unit:'мм',demo:'budget',desc:'Межзрачковое расстояние. От него зависит перевод параллакса в градусы и диоптрии: одно и то же смещение на экране для человека с разным IPD означает разную глубину.'},
+ {k:'vdh',label:'virtualDisplayHeight',min:.06,max:.6,step:.005,def:.24,unit:'м',demo:'ovd',desc:'Высота виртуального дисплея, для которого собрана сцена. Это масштаб всей сцены и одновременно коэффициент пересчёта позы глаз в реальные сантиметры.'},
+ {k:'ipdFactor',label:'Сила стерео (ipdFactor)',min:0,max:1,step:.02,def:1,unit:'',demo:'depth-ladder',desc:'Насколько сильно рантайм разводит глаза. 0 — обе картинки одинаковы (плоско), 1 — полное стерео. Удобно плавно «выключить» глубину, не меняя сам тест.'},
+ {k:'lensPitch',label:'Шаг линзы (модель)',min:2,max:16,step:.1,def:6,unit:'px панели',demo:'res-lattice',desc:'Сколько пикселей панели накрывает одна линза в схеме. Меняя шаг, видно, как одна линза раздаёт субпиксели между глазами.'},
+ {k:'lensZoom',label:'Масштаб модели пикселей',min:6,max:48,step:1,def:20,unit:'×',demo:'res-lattice',desc:'Увеличение схемы «пиксели + линза». При большом увеличении различимы отдельные RGB-субпиксели и диагональные границы видов.'}
+];
+const TOGGLES=[
+ {k:'swap',label:'Поменять глаза',def:false,desc:'Меняет местами левую и правую половины. Если в тесте «Какой глаз какой» надписи перепутаны — включите.'},
+ {k:'parallax',label:'Look-around',def:true,desc:'Разрешает рантайму двигать перспективу вслед за головой. Выключите, чтобы отделить стерео от параллакса.'},
+ {k:'guides',label:'Направляющие',def:true,desc:'Сетки и рамки в тестах геометрии и трекинга — опорная плоскость стекла.'},
+ {k:'sceneHud',label:'HUD в сцене',def:false,desc:'Подпись прямо внутри стерео-картинки: нужно, когда интерфейс скрыт фото-режимом.'},
+ {k:'paused',label:'Пауза',def:false,desc:'Останавливает анимацию. В тесте мерцания пауза выключает мерцание.'},
+ {k:'rdsDynamic',label:'Динамический шум RDS',def:true,desc:'Обновляет случайные точки несколько раз в секунду, убирая остаточные монокулярные подсказки.'},
+ {k:'monoView',label:'SBS-превью в 2D',def:true,desc:'В обычном браузере показывать одну картинку (выкл) или сырую SBS-пару (вкл) для отладки.'}
+];
+const DEF={};PARAMS.forEach(p=>DEF[p.k]=p.def);TOGGLES.forEach(t=>DEF[t.k]=t.def);DEF.quality=1080;DEF.shape='circle';
+let S={...DEF},CAL={scale:1,off:0,ipdScale:1,ref:null},LOG=[],ti=0,cat='all',query='';
+try{const j=JSON.parse(localStorage.getItem(LS)||'{}');if(j.S)S={...DEF,...j.S};if(j.CAL)CAL={...CAL,...j.CAL};if(j.LOG)LOG=j.LOG;if(Number.isInteger(j.ti))ti=j.ti}catch(e){}
+const save=()=>{try{localStorage.setItem(LS,JSON.stringify({S,CAL,LOG,ti}))}catch(e){}};
+let tT=0;const toast=(m,ms=3600)=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('on'),ms)};
+const L={
+ owl:['Owl3D — What Is a Lenticular Lens','Колонки пикселей по глазам, sweet spot, crosstalk, трекинг','https://www.owl3d.com/guides/lenticular-lens'],
+ owllf:['Owl3D — Light Field Display','Multi-view против eye-tracked stereo, разрешение на глаз','https://www.owl3d.com/guides/light-field-display'],
+ cur:['Curiosity Box — Lenticular Optics','Interlaced-полоски и линзы для новичков','https://curiositybox.com/blogs/inqs-corner/the-science-of-lenticular-optics'],
+ wiki:['Wikipedia — Autostereoscopy','Барьер против линзы, наклон линз Philips, потеря разрешения','https://en.wikipedia.org/wiki/Autostereoscopy'],
+ wikil:['Wikipedia — Lenticular lens','Оптика цилиндрических линз, LPI','https://en.wikipedia.org/wiki/Lenticular_lens'],
+ sam:['Samsung Newsroom — интервью Odyssey 3D','Eye tracking, view mapping, линза, калибровка в чипе','https://news.samsung.com/global/interview-transforming-the-monitor-experience-expanding-the-boundaries-with-odyssey-3d'],
+ meta:['Samsung + POSTECH в Nature: металинза','Переключаемая 2D/3D, 1.2 мм, угол до 100°','https://news.samsung.com/global/samsung-and-postech-publish-2d-3d-switchable-display-research-in-nature'],
+ g90xh:['Samsung — линейка 2026: Odyssey 3D G90XH','32″ 6K 6144×3456, 165 Гц — первый 6K glasses-free 3D','https://news.samsung.com/global/samsung-unveils-new-odyssey-gaming-monitor-lineup-featuring-world-first-6k-3d-and-ultra-high-resolution-displays'],
+ samhow:['Samsung Support — How to use 3D','UHD, USB, HDR off, камера, 55–95 см','https://www.samsung.com/ie/support/displays/how-to-use-3d-on-the-odyssey-3d-gaming-monitor/'],
+ shib:['Shibata 2011 — The zone of comfort','Правило процентов, vergence–accommodation','https://pmc.ncbi.nlm.nih.gov/articles/PMC3369815/'],
+ sony:['Sony SID 2023 — Dynamic Crosstalk','Люксметр и виртуальное лицо для eye-tracked','https://www.sony.com/en/SonyInfo/technology/publications/dynamic-crosstalk-evaluation-method-for-eye-tracking-based-autostereoscopic-display-using-a-virtual-image/'],
+ spie:['SPIE TT99 — Lenticular 3D Display','Муар, наклон, склейка, калибровка','https://spie.org/samples/TT99.pdf'],
+ moire:['Lee 2026 — Moiré modeling in 3D displays','Муар как интерференция решёток','https://link.springer.com/article/10.1007/s10055-026-01339-w'],
+ sur:['Surman 2023 — Depth of field, slanted lenticular','Рабочая дистанция наклонной линзы','https://opg.optica.org/optcon/abstract.cfm?uri=optcon-2-9-1929'],
+ boev:['Boev — Comparative Study of Autostereoscopic Displays','Crosstalk, sweet spot, разрешение на OVD','https://www.imaging.org/common/uploaded%20files/pdfs/Reporter/Articles/2011_26/REP26_2_EI2011_BOEV_7881_10.pdf'],
+ proj:['ProjectorReviews — 3D Crosstalk','Белое окно на чёрном; цели <1%, идеал 0.1%','https://www.projectorreviews.com/home-theater-and-projectors-the-technical-side/3d-crosstalkghosting-part-2-and-silver-screens/'],
+ rds:['Cao 2022 — Random-dot stereotest','Клинический RDS с трекингом, 40–2400 arcsec','https://pubmed.ncbi.nlm.nih.gov/35795164/'],
+ ast:['Read 2020 — ASTEROID','Мелкие плотные точки снижают порог','https://pubmed.ncbi.nlm.nih.gov/32989799/'],
+ dxr:['DisplayXR — организация','Рантайм, расширения, плагины, браузер','https://github.com/DisplayXR'],
+ auth:['Authoring inline-3D pages','Контракт SBS-буфера и ригов','https://github.com/DisplayXR/displayxr-web/blob/main/docs/authoring-inline-3d.md'],
+ woven:['Woven canvas rules','firstWoven, resize, что нельзя вешать на canvas','https://github.com/DisplayXR/displayxr-web/blob/main/docs/woven-canvas-rules.md'],
+ ixbt:['iXBT — тема Odyssey 3D G90XF','Русскоязычные гайды и обсуждения','https://forum.ixbt.com/topic.cgi?id=28:31358'],
+ mdn:['MDN — Fullscreen API','Официальный способ полноэкранного режима','https://developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API']
+};
+const linkHTML=k=>{const a=L[k];return a?`<a class="link" target="_blank" rel="noopener" href="${a[2]}"><em>источник</em><b>${a[0]}</b><span>${a[1]}</span></a>`:''};
+const CATS={sep:'Разделение',xt:'Crosstalk',lens:'Оптика решётки',res:'Разрешение',depth:'Глубина',zone:'Зона и трекинг',vision:'Стереозрение',time:'Время'};
+const T=(id,name,en,cat,help,info,uses,draw,animated)=>({id,name,en,cat,help,info,uses,draw,animated:!!animated});
+const RES={p:8,axis:'h',n:0,last:null,rev:[],done:false,th:null,results:{}};
+const AC={d:16,q:0,n:0,ok:0,rev:[],last:null,done:false,threshold:null};
+const tests=[
+T('eye-split','Разделение глаз','Eye separation','sep','Закрой один глаз — останется один чистый цвет.',{why:'Базовая проверка: каждому глазу достаётся своя картинка.',how:'Закрывайте глаза по очереди. Камера смартфона покажет полосы муара.',phys:'Линза раздаёт колонки пикселей по направлениям, трекинг удерживает разделение.',links:['owl','sam']},['level','fontScale'],(g,e)=>{g.fillStyle=e?'#ff2d78':'#22d3ee';g.fillRect(0,0,EW,LH());txt(g,e?'R · ПРАВЫЙ':'L · ЛЕВЫЙ',EW/2,LH()/2,110,e?'#fff':'#04121a')}),
+T('lr-id','Какой глаз какой','L/R assignment','sep','Закрой левый глаз — LEFT должен исчезнуть.',{why:'Проверка порядка половин SBS.',how:'Если надписи наоборот — включите «Поменять глаза».',phys:'Левая половина буфера = левый глаз; ошибка порядка выворачивает глубину.',links:['auth','owl']},['fontScale'],(g,e)=>{const H=LH();g.fillStyle=e?'#25001c':'#002530';g.fillRect(0,0,EW,H);txt(g,e?'RIGHT':'LEFT',EW/2,H/2-70,140,'#fff');txt(g,e?'ПРАВЫЙ':'ЛЕВЫЙ',EW/2,H/2+95,66,e?'#ff2d78':'#22d3ee')}),
+T('geometry','Геометрия и аспект','Aspect & alignment','sep','Круг — круг, сетки обоих глаз совпадают.',{why:'Ловит растяжение буфера и вертикальное рассогласование.',how:'Линии сетки должны сливаться без двоения по вертикали.',phys:'Буфер сцены вдвое шире CSS-бокса; рантайм расплющивает пару обратно.',links:['auth','woven']},['guides','fontScale'],(g,e)=>{const H=LH();g.fillStyle='#0e1420';g.fillRect(0,0,EW,H);grid(g,100,'#2b3550');g.strokeStyle='#fff';g.lineWidth=4;g.beginPath();g.arc(EW/2,H/2,260,0,7);g.stroke();g.strokeRect(EW/2-185,H/2-185,370,370);g.strokeStyle='#a3e635';g.beginPath();g.moveTo(EW/2-320,H/2);g.lineTo(EW/2+320,H/2);g.moveTo(EW/2,H/2-320);g.lineTo(EW/2,H/2+320);g.stroke();txt(g,'CIRCLE · КРУГ',EW/2,H/2+330,36,'#22d3ee')}),
+T('vdisp','Вертикальный параллакс','Vertical disparity','sep','При Δ=0 линия должна быть одной.',{why:'Вертикальный сдвиг не даёт глубины, но утомляет.',how:'Ползунок d здесь работает как Δ. При нуле — одна линия.',phys:'Глаза сводятся по горизонтали; вертикальные расхождения почти не переносятся.',links:['shib','spie']},['d','fontScale'],(g,e)=>{const H=LH(),dv=e?S.d:0;g.fillStyle='#0d1220';g.fillRect(0,0,EW,H);grid(g,80,'#232c46',true);const y=H/2+dv;g.strokeStyle='#a3e635';g.lineWidth=5;g.beginPath();g.moveTo(120,y);g.lineTo(EW-120,y);g.stroke();txt(g,'Δ = '+dv.toFixed(1)+' px',EW/2,H/2-140,34,'#fff')}),
+T('xt-field','Поле crosstalk','Crosstalk field','xt','«Чёрный» глаз должен видеть чёрный.',{why:'Максимально требовательный режим утечки.',how:'Закройте яркий глаз; любое свечение — ghosting.',phys:'Crosstalk — доля света чужого вида; цель <1%, отлично ~0.1%.',links:['proj','sony']},['level'],(g,e)=>{const v=Math.round(S.level);g.fillStyle=e?'#000':'rgb('+v+','+v+','+v+')';g.fillRect(0,0,EW,LH())}),
+T('xt-ladder','Лесенка ghosting','Crosstalk ladder','xt','Нижняя видимая ступень — порог утечки.',{why:'Полуколичественная оценка утечки по серым ступеням.',how:'Найдите самую тусклую различимую ступень в «чёрном» глазу.',phys:'Gray-to-gray выявляет утечку не только на белом.',links:['sony','proj']},['fontScale'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);if(!e){const lv=[0,1,2,5,10,20,40,70,100],w=EW/lv.length;lv.forEach((p,i)=>{const v=Math.round(255*p/100);g.fillStyle='rgb('+v+','+v+','+v+')';g.fillRect(i*w+6,H/2-140,w-12,280);txt(g,p+'%',i*w+w/2,H/2+190,26,'#fff')});txt(g,'BRIGHT EYE',EW/2,H/2-215,30,'#22d3ee')}}),
+T('xt-window','Окно ghosting','Crosstalk window','xt','Белое окно в одном глазу, чёрный фон в другом.',{why:'Классический паттерн; показывает неравномерность утечки по полю.',how:'Период задаёт ширину окна, d — его положение. В чёрном глазу окна быть не должно.',phys:'К краю экрана угол падения растёт, утечка обычно сильнее.',links:['proj','sony']},['period','d'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);if(!e){const w=Math.max(20,S.period*24),cx=EW/2+clamp(S.d,-700,700);g.fillStyle='#fff';g.fillRect(cx-w/2,H/2-250,w,500);txt(g,'WHITE WINDOW',cx,H/2-300,26,'#22d3ee')}}),
+T('slant','Угол решётки (slant)','Lens slant finder','lens','Камерой ищите самые крупные биения.',{why:'Наклон линз к сетке пикселей — приём борьбы с муаром.',how:'Меняйте угол и период до самых крупных муаровых полос.',phys:'Philips наклонил линзы, чтобы разбить муар; наклон виден в плетении.',links:['wiki','spie','moire']},['angle','period'],(g,e)=>{const H=LH();grating(g,S.period*ppx(),S.angle);txt(g,S.angle.toFixed(1)+'°',EW/2,H-120,38,'#22d3ee')}),
+T('lens-toggle','Линза вкл/выкл','Lens on/off','lens','Жмите T и снимайте оба состояния.',{why:'Проверка переключаемой оптики.',how:'В 2D полос решётки быть не должно, в 3D появляются.',phys:'Samsung: линза активируется только в 3D-режиме.',links:['sam','meta']},['level'],(g,e)=>{const v=Math.round(S.level);g.fillStyle='rgb('+v+','+v+','+v+')';g.fillRect(0,0,EW,LH())}),
+T('weave','Микроскоп плетения','Weave microscope','lens','Макро: видно диагональное плетение.',{why:'Реальная карта «пиксель → глаз».',how:'Клетка 1–2 px и макро-съёмка; двигая головой, видно перестройку карты.',phys:'View mapping пересчитывается по позиции глаз.',links:['sam','auth']},['period'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);const c=Math.max(1,Math.round(S.period)),t=document.createElement('canvas');t.width=t.height=2*c;const q=t.getContext('2d');q.fillStyle='#fff';q.fillRect(0,0,c,c);q.fillRect(c,c,c,c);const p=g.createPattern(t,'repeat');g.save();if(e)g.translate(c,c);g.fillStyle=p;g.fillRect(-c,-c,EW+2*c,H+2*c);g.restore()}),
+T('columns','Колонки плетения','Column interleave','lens','L/R-колонки регулируемой ширины.',{why:'Визуализация interlacing.',how:'При 1 px видна структура колонок; сравните с наклоном решётки.',phys:'Картинка режется на полоски, линза направляет их в разные глаза.',links:['cur','wikil']},['period'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);const c=Math.max(1,Math.round(S.period)),t=document.createElement('canvas');t.width=2*c;t.height=1;const q=t.getContext('2d');q.fillStyle='#fff';q.fillRect(0,0,c,1);const p=g.createPattern(t,'repeat');g.save();if(e)g.translate(c,0);g.fillStyle=p;g.fillRect(-c,0,EW+2*c,H);g.restore()}),
+T('color-moire','Цветовой муар','Colour moiré','lens','RGB-решётки выявляют цветные каёмки.',{why:'Наклон линзы и RGB-субпиксели дают цветные артефакты.',how:'Ищите окрашивание краёв белых полос на разных периодах.',phys:'R, G и B усредняются линзой по-разному — цветовой муар.',links:['moire','spie']},['period'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);const p=Math.max(1,S.period),cols=['#ff3b3b','#39ff6a','#4d7cff'];for(let k=0;k<3;k++){const y=90+k*300;g.fillStyle=cols[k];for(let x=60;x<EW-300;x+=2*p)g.fillRect(x,y,p,190);for(let yy=y;yy<y+190;yy+=2*p)g.fillRect(EW-260,yy,200,p);txt(g,['R','G','B'][k]+' '+p.toFixed(1)+'px',EW/2,y+225,26,cols[k])}}),
+T('clarity','Чёткость 2D/3D','Lens clarity','lens','Сравните резкость при T=2D и T=3D.',{why:'Цена включённой оптики на нулевой глубине.',how:'Жмите T и сравнивайте миры и шрифты; ползунок шрифта меняет размер подписей.',phys:'В 3D глазу достаётся часть пикселей плюс размытие линзы.',links:['owl','sam']},['period','fontScale'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);let x=80;[2,3,4,6].forEach(p=>{g.fillStyle='#fff';for(let i=0;i<300;i+=2*p)g.fillRect(x+i,110,p,230);txt(g,p+'px',x+150,390,26,'#22d3ee');x+=380});[14,18,24,30,38].forEach((s,i)=>txt(g,s+'px: Съешь же ещё этих мягких булок',80,520+i*66,s,'#fff','left'));txt(g,'ZERO DISPARITY',EW/2,H-105,30,'#a3e635')}),
+T('luminance','Яркость 2D/3D','Luminance','lens','Замерьте яркость в обоих режимах.',{why:'Сколько яркости стоит включённая линза.',how:'Снимите поле в ручном режиме камеры в 2D и 3D, запишите оба замера.',phys:'Часть света уходит в соседние виды и рассеивается.',links:['meta','proj']},['level'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);const lv=[10,25,50,75,100],w=EW/lv.length;lv.forEach((p,i)=>{const v=Math.round(255*p/100*S.level/255);g.fillStyle='rgb('+v+','+v+','+v+')';g.fillRect(i*w+8,160,w-16,H-400);txt(g,p+'%',i*w+w/2,H-200,28,'#fff')});txt(g,'Поле яркости · '+Math.round(S.level),EW/2,95,30,'#22d3ee')}),
+T('resolution','Миры разрешения','Resolution charts','res','Предел чёткости отдельно для L и R.',{why:'Быстрая визуальная оценка детализации.',how:'Сравнивайте группы полос и звезду Сименса, закрывая глаза по очереди.',phys:'Наклонная решётка делит потери между осями примерно поровну.',links:['owl','boev']},['fontScale'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);let x=60;[2,3,4,6,8,12].forEach(p=>{g.fillStyle='#fff';for(let i=0;i<240;i+=2*p)g.fillRect(x+i,80,p,200);for(let i=0;i<200;i+=2*p)g.fillRect(x,370+i,240,p);txt(g,p+'px',x+120,320,24,'#22d3ee');txt(g,p+'px',x+120,610,24,'#ff2d78');x+=300});const cx=300,cy=H-210,r=145;g.fillStyle='#fff';for(let i=0;i<32;i++){const a=i*Math.PI/16;g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,r,a,a+Math.PI/32);g.closePath();g.fill()}txt(g,'Siemens star',cx,cy+r+28,22,'#a3aec8');[12,16,22,28,36].forEach((s,i)=>txt(g,s+'px: Текст 0123456789',980,690+i*58,s,'#fff','left'))}),
+T('res-measure','Реальное разрешение (замер)','Measured stereo resolution','res','«Различаю» / «Слилось» — лестница ищет ваш порог.',{why:'Даёт цифры: какое разрешение реально достаётся глазу в 3D и сколько потеряно относительно 2D.',how:'Поставьте качество 2160p, выберите ось, ответьте несколько раз кнопками внизу справа. После серии разворотов появится порог; сохраните его. Повторите для 2D (клавиша T) — получите величину потерь.',phys:'Порог — минимальный период решётки, который ещё различим. Эффективное разрешение по оси = 2 × размер панели / порог. При наклонной линзе потери делятся между осями, поэтому по каждой оси остаётся примерно 1/√2 ≈ 0.71 линейного разрешения.',links:['boev','owl','wiki']},['fontScale'],(g,e)=>{const H=LH(),a=resAngle();grating(g,RES.p,a);const rd=bufReady();g.fillStyle='rgba(0,0,0,.62)';g.fillRect(0,0,EW,150*S.fontScale);txt(g,'Период '+RES.p.toFixed(2)+' px панели · ось '+axisName(RES.axis)+' · '+(lens3d?'3D':'2D'),EW/2,44*S.fontScale,30,'#22d3ee');txt(g,rd.ok?'Буфер достаточен для замера':'Буфер мал: поставьте качество 2160p',EW/2,102*S.fontScale,26,rd.ok?'#a3e635':'#fbbf24');txt(g,'Эквивалент по оси ≈ '+Math.round(2*(RES.axis==='v'?panelH():panelW())/RES.p)+' px',EW/2,H-70,30,'#fff')}),
+T('res-lattice','Модель пикселей и линзы','Pixel / lens lattice','res','Как физически распределяются пиксели между глазами.',{why:'Показывает, «в каком виде» находятся пиксели в стерео: субпиксели, наклонные линзы и диагональная выборка.',how:'Меняйте шаг линзы, наклон и масштаб. Голубым помечены субпиксели левого глаза, розовым — правого; параллакс d сдвигает границу видов, как это делает трекинг.',phys:'Это модель, а не карта вашего экземпляра: реальные наклон и шаг измеряются тестами slant, weave и columns. Модель объясняет, почему эффективное разрешение падает примерно вдвое по площади и почему границы видов идут по диагонали.',links:['wiki','spie','sam']},['lensPitch','lensZoom','angle','d'],(g,e)=>{lattice(g,e)}),
+T('gamma','Гамма и баланс глаз','Grey ramp','res','Ступени серого одинаковы для обоих глаз.',{why:'Разница яркости между глазами утомляет.',how:'Сравнивайте ступени, закрывая глаза по очереди.',phys:'Неравенство яркостей вызывает бинокулярную конкуренцию.',links:['shib']},['fontScale'],(g,e)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);const n=11,w=EW/n;for(let i=0;i<n;i++){const v=Math.round(255*i/(n-1));g.fillStyle='rgb('+v+','+v+','+v+')';g.fillRect(i*w,130,w+1,280);txt(g,Math.round(100*i/(n-1))+'%',i*w+w/2,455,24,'#fff')}const gr=g.createLinearGradient(0,0,EW,0);gr.addColorStop(0,'#000');gr.addColorStop(1,'#fff');g.fillStyle=gr;g.fillRect(0,545,EW,190);txt(g,'0 → 100%',EW/2,790,28,'#22d3ee')}),
+T('depth-ladder','Лестница глубины','Depth ladder','depth','Ступени от «за экраном» до «перед».',{why:'Диапазон глубин и точка двоения.',how:'Меняйте шаг ползунком d.',phys:'Crossed выносит объект перед стеклом, uncrossed уводит за него.',links:['shib']},['d','ipdFactor'],(g,e)=>{const H=LH(),s=Math.max(2,Math.abs(S.d));g.fillStyle='#0b1020';g.fillRect(0,0,EW,H);g.strokeStyle='#2b3550';g.lineWidth=2;g.strokeRect(EW/2-830,H/2-175,1660,350);for(let k=-3;k<=3;k++){const dd=k*s,x=EW/2+k*250+disp(e,dd);g.strokeStyle=k?'#22d3ee':'#72809f';g.lineWidth=5;g.beginPath();g.moveTo(x-38,H/2);g.lineTo(x+38,H/2);g.moveTo(x,H/2-38);g.lineTo(x,H/2+38);g.stroke();txt(g,(dd>0?'+':'')+dd.toFixed(0),x,H/2+86,28,'#fff')}}),
+T('fusion','Предел фузии','Fusion limit','depth','Найдите параллакс двоения.',{why:'Личный предел слияния.',how:'Медленно увеличивайте d, зафиксируйте момент двоения кнопкой записи.',phys:'Панумовская область ограничивает допустимый параллакс.',links:['shib','rds']},['d','speed'],(g,e,t)=>{const H=LH(),dd=S.paused?S.d:S.d*Math.sin(t*.5);g.fillStyle='#000';g.fillRect(0,0,EW,H);g.strokeStyle='#37456a';g.lineWidth=2;g.strokeRect(EW/2-300,H/2-300,600,600);const x=EW/2+disp(e,dd);g.strokeStyle='#a3e635';g.lineWidth=6;g.beginPath();g.arc(x,H/2,90,0,7);g.stroke();g.fillStyle='#a3e635';g.beginPath();g.arc(x,H/2,13,0,7);g.fill();txt(g,'d='+dd.toFixed(1)+' ≈'+Math.abs(ang(dd).arcsec).toFixed(0)+'″',EW/2,H-140,32,'#fff')},true),
+T('budget','Бюджет глубины','Depth budget','depth','Асимметричные пороги комфорта.',{why:'Перевод параллакса в проценты, градусы и диоптрии.',how:'Держите мишень в зелёной зоне: спереди ≤3%, сзади ≤1.5% ширины.',phys:'Фокус всегда на стекле, сведение — на виртуальной глубине; отсюда конфликт.',links:['shib']},['d','ipdMM'],(g,e)=>{const H=LH(),q=ang(S.d),c=comfort(q),x=EW/2+disp(e,S.d),y=H/2-70;g.fillStyle='#000';g.fillRect(0,0,EW,H);g.strokeStyle='#22d3ee';g.lineWidth=6;g.beginPath();g.arc(x,y,86,0,7);g.stroke();g.beginPath();g.moveTo(x-46,y);g.lineTo(x+46,y);g.moveTo(x,y-46);g.lineTo(x,y+46);g.stroke();const gx=180,gw=EW-360,gy=H-190,lim=q.near?4:2,pc=Math.min(Math.abs(q.pct),lim)/lim;[[0,.75,'#2f7d1f'],[.75,1,'#8a6a12']].forEach(z=>{g.fillStyle=z[2];g.fillRect(gx+gw*z[0],gy,gw*(z[1]-z[0]),34)});g.fillStyle='#fff';g.fillRect(gx+gw*pc-3,gy-10,6,54);txt(g,q.pct.toFixed(2)+'% · '+q.deg.toFixed(2)+'° · Δ'+q.dpt.toFixed(2)+' D · '+c.t,EW/2,gy-46,28,c.c)}),
+T('window-violation','Нарушение окна','Window violation','depth','Объект перед экраном режется рамкой.',{why:'Классическая ошибка стереокомпозиции.',how:'Увеличьте d и посмотрите на конфликт с краем кадра.',phys:'Рамка задаёт окно; объект перед окном не может им обрезаться.',links:['shib','owl']},['d'],(g,e)=>{const H=LH(),x=disp(e,Math.abs(S.d));g.fillStyle='#000';g.fillRect(0,0,EW,H);g.strokeStyle='#72809f';g.lineWidth=3;g.strokeRect(60,60,EW-120,H-120);g.fillStyle='#fbbf24';g.fillRect(x,H/2-70,EW,140);txt(g,'d=+'+Math.abs(S.d).toFixed(0),EW/2+x,H/2,40,'#1a1200')}),
+T('zone','Sweet spot / зона','Viewing zone','zone','Отмечайте границы устойчивого 3D.',{why:'Карта рабочей зоны и инверсии глубины.',how:'Двигайте головой; на границе появляются каёмки, затем глубина выворачивается.',phys:'Трекинг сдвигает виды, но у оптики есть предел по углу и дистанции.',links:['owl','sur']},['d'],(g,e)=>{const H=LH();g.fillStyle=e?'#3a0020':'#00323f';g.fillRect(0,0,EW,H);grid(g,160,'rgba(255,255,255,.2)');const x=EW/2+disp(e,Math.abs(S.d));g.strokeStyle='#fff';g.lineWidth=7;g.beginPath();g.arc(x,H/2,110,0,7);g.stroke();g.beginPath();g.moveTo(x-58,H/2);g.lineTo(x+58,H/2);g.moveTo(x,H/2-58);g.lineTo(x,H/2+58);g.stroke()}),
+T('tracking','Стабильность трекинга','Tracking stability','zone','Сетка на стекле, крест перед ним.',{why:'Видно задержку и срывы трекинга.',how:'Двигайте головой: сетка не должна плыть.',phys:'Задержка между измерением глаз и выводом даёт плавание объектов.',links:['sam','auth']},['d','speed'],(g,e,t)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);grid(g,40,'#232c46');const mx=S.paused?0:Math.sin(t*.7)*470,x=EW/2+mx+disp(e,Math.abs(S.d));g.strokeStyle='#ff2d78';g.lineWidth=6;g.beginPath();g.moveTo(x-58,H/2);g.lineTo(x+58,H/2);g.moveTo(x,H/2-58);g.lineTo(x,H/2+58);g.stroke()},true),
+T('ovd','Рабочая дистанция','Working distance','zone','Найдите ближнюю и дальнюю границы.',{why:'Диапазон дистанций, где разделение работает.',how:'Приближайтесь до потери 3D — MIN; отдаляйтесь — MAX.',phys:'Для наклонных линз рабочий диапазон описывают как глубину резкости.',links:['sur','samhow']},['vdh','ipdMM'],(g,e)=>{const H=LH();g.fillStyle='#080d18';g.fillRect(0,0,EW,H);const x=EW/2+disp(e,60);g.strokeStyle='#22d3ee';g.lineWidth=6;g.beginPath();g.arc(x,H/2-50,120,0,7);g.stroke();txt(g,(viewerM()*100).toFixed(1)+' см',EW/2,H/2+165,60,'#a3e635');txt(g,eyeWorld?'живой трекинг':'номинал панели',EW/2,H/2+235,26,'#a3aec8')}),
+T('rds','Random-dot stereogram','RDS','vision','Фигура видна только двумя глазами.',{why:'Честная проверка стереозрения без монокулярных подсказок.',how:'Закройте один глаз — фигура исчезнет в шуме.',phys:'Так устроены клинические стереотесты Randot и ASTEROID.',links:['rds','ast']},['d','density','dotSize','shape'],(g,e,t)=>rdsDraw(g,e,t,null),true),
+T('acuity','Стереоострота (лестница)','Stereoacuity','vision','Укажите участок с фигурой: клавиши 1–4.',{why:'Ваш порог стереоостроты в угловых секундах.',how:'Верно — параллакс уменьшается, ошибка — растёт; после разворотов появится порог.',phys:'Метод лестницы сходится к порогу; панель и линза ставят свой предел.',links:['rds','ast']},['density','dotSize'],(g,e,t)=>{const H=LH();g.fillStyle='#000';g.fillRect(0,0,EW,H);g.strokeStyle='#1c2438';g.lineWidth=2;g.beginPath();g.moveTo(EW/2,0);g.lineTo(EW/2,H);g.moveTo(0,H/2);g.lineTo(EW,H/2);g.stroke();rdsDraw(g,e,t,{cx:(AC.q%2)?EW*.75:EW*.25,cy:(AC.q>1)?H*.75:H*.25,r:150,d:AC.d});txt(g,'d='+AC.d.toFixed(2)+'px ≈'+Math.abs(ang(AC.d).arcsec).toFixed(0)+'″ · попытка '+(AC.n+1),EW/2,H-70,26,'#a3aec8')},true),
+T('flicker','Мерцание (осторожно)','Temporal flicker','time','Снимите паузу для включения.',{why:'Переходные процессы и временный crosstalk.',how:'Частота низкая; прекратите при дискомфорте.',phys:'Инерция панели оставляет след предыдущего кадра.',links:['proj']},['level'],(g,e,t)=>{const ph=S.paused?0:Math.floor(t*1.2)%2,w=(e===0)!==(ph===1),v=Math.round(S.level);g.fillStyle=w?'rgb('+v+','+v+','+v+')':'#000';g.fillRect(0,0,EW,LH())},true),
+T('uniformity','Равномерность по полю','Field uniformity','zone','Мишени в центре и по углам.',{why:'Края поля обычно хуже центра.',how:'Сравните чёткость и двоение пяти мишеней.',phys:'К краям растёт угол падения и утечка.',links:['proj','boev']},['d'],(g,e)=>{const H=LH(),m=170;g.fillStyle='#0a0f1c';g.fillRect(0,0,EW,H);[[EW/2,H/2],[m,m],[EW-m,m],[m,H-m],[EW-m,H-m]].forEach((p,i)=>{const x=p[0]+disp(e,S.d),y=p[1];g.strokeStyle='#22d3ee';g.lineWidth=4;g.beginPath();g.arc(x,y,58,0,7);g.stroke();g.beginPath();g.moveTo(x-28,y);g.lineTo(x+28,y);g.moveTo(x,y-28);g.lineTo(x,y+28);g.stroke();txt(g,i?''+i:'C',x,y+94,24,'#fff')})})
+];
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+let logH=1080,curU=1;
+const LH=()=>logH,disp=(e,d)=>e===0?d/2:-d/2;
+function txt(g,s,x,y,size,color,align){const z=size*S.fontScale;g.font='bold '+z+'px system-ui,Segoe UI,Arial';g.textAlign=align||'center';g.textBaseline='middle';g.lineWidth=Math.max(2,z/8);g.strokeStyle='rgba(0,0,0,.88)';g.strokeText(s,x,y);g.fillStyle=color;g.fillText(s,x,y)}
+function grid(g,step,c,hOnly){if(!S.guides)return;g.strokeStyle=c;g.lineWidth=1;const H=LH();if(!hOnly)for(let x=0;x<=EW;x+=step){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke()}for(let y=0;y<=H;y+=step){g.beginPath();g.moveTo(0,y);g.lineTo(EW,y);g.stroke()}}
+function grating(g,pPanel,angDeg){const H=LH(),pl=Math.max(.4,pPanel/ppx());g.fillStyle='#000';g.fillRect(0,0,EW,H);g.save();g.translate(EW/2,H/2);g.rotate(angDeg*Math.PI/180);const R=Math.hypot(EW,H),snap=1/curU;g.fillStyle='#fff';for(let x=-R;x<R;x+=pl){const a=Math.round(x/snap)*snap,b=Math.round((x+pl/2)/snap)*snap;if(b>a)g.fillRect(a,-R,b-a,2*R)}g.restore()}
+function panelW(){return (INFO&&INFO.displayPixelWidth)||3840}
+function panelH(){return (INFO&&INFO.displayPixelHeight)||2160}
+function frac(){return (MET.canvasSizeM&&MET.displaySizeM&&MET.displaySizeM[0])?MET.canvasSizeM[0]/MET.displaySizeM[0]:1}
+function ppx(){return panelW()*frac()/EW}
+function bufReady(){const need=panelW()*frac(),have=(gl.drawingBufferWidth||0)/(sbsWanted()?2:1);return{ok:have>=need*.98,have:Math.round(have),need:Math.round(need)}}
+function resAngle(){return RES.axis==='h'?0:RES.axis==='v'?90:RES.axis==='s'?S.angle:S.angle+90}
+function axisName(a){return a==='h'?'горизонталь (верт. полосы)':a==='v'?'вертикаль (гориз. полосы)':a==='s'?'вдоль линз':'поперёк линз'}
+function lattice(g,e){const H=LH();g.fillStyle='#05070d';g.fillRect(0,0,EW,H);
+ let z=S.lensZoom,cols=Math.ceil(EW/z),rows=Math.ceil(H/z);while(cols*rows>9000){z*=1.2;cols=Math.ceil(EW/z);rows=Math.ceil(H/z)}
+ const th=S.angle*Math.PI/180,cs=Math.cos(th),sn=Math.sin(th),pitch=Math.max(2,S.lensPitch),off=S.d/240;
+ for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){const px=i*z,py=j*z;
+  for(let s=0;s<3;s++){const sx=px+s*z/3,cx=(i+(s+.5)/3),cy=j+.5;
+   const ph=(((cx*cs+cy*sn)/pitch+off)%1+1)%1,left=ph<.5;
+   g.fillStyle=['#5a1414','#145a1e','#141f5a'][s];g.fillRect(sx,py,z/3-.6,z-.6);
+   g.fillStyle=left?'rgba(34,211,238,.5)':'rgba(255,45,120,.5)';g.fillRect(sx,py,z/3-.6,z-.6)}}
+ g.save();g.translate(EW/2,H/2);g.rotate(th);const R=Math.hypot(EW,H),lp=pitch*z;g.strokeStyle='rgba(255,255,255,.5)';g.lineWidth=Math.max(1,z*.12);
+ for(let x=-R;x<R;x+=lp){g.beginPath();g.moveTo(x,-R);g.lineTo(x,R);g.stroke()}g.restore();
+ g.fillStyle='rgba(0,0,0,.66)';g.fillRect(0,0,EW,120*S.fontScale);
+ txt(g,'МОДЕЛЬ · шаг линзы '+S.lensPitch.toFixed(1)+' px · наклон '+S.angle.toFixed(1)+'° · ×'+z.toFixed(0),EW/2,40*S.fontScale,26,'#fff');
+ txt(g,(e?'ПРАВЫЙ глаз':'ЛЕВЫЙ глаз')+' · голубое = L, розовое = R',EW/2,92*S.fontScale,24,e?'#ff2d78':'#22d3ee')}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let dotKey='',dotPts=[];
+function dots(){const k=S.density+'|'+(S.rdsDynamic?Math.floor(animT*8):0);if(k===dotKey)return dotPts;dotKey=k;const r=rng(1337+Math.floor(animT*8)*7919),n=Math.round(S.density),p=new Array(n);for(let i=0;i<n;i++)p[i]=[r()*EW,r()*1080];dotPts=p;return p}
+function shapePath(g,sh,cx,cy,r){g.beginPath();if(sh==='square')g.rect(cx-r,cy-r,2*r,2*r);else if(sh==='triangle'){g.moveTo(cx,cy-r);g.lineTo(cx+r,cy+r);g.lineTo(cx-r,cy+r);g.closePath()}else if(sh==='ring'){g.arc(cx,cy,r,0,7);g.arc(cx,cy,r*.55,0,7,true)}else if(sh==='E'){const w=r*1.3,h=r*1.7,t=r*.42;g.rect(cx-w/2,cy-h/2,t,h);g.rect(cx-w/2,cy-h/2,w,t);g.rect(cx-w/2,cy-t/2,w*.85,t);g.rect(cx-w/2,cy+h/2-t,w,t)}else g.arc(cx,cy,r,0,7)}
+function rdsDraw(g,e,t,o){const H=LH(),pts=dots(),sz=S.dotSize,d=o?o.d:S.d,cx=o?o.cx:EW/2,cy=o?o.cy:H/2,r=o?o.r:230,k=H/1080;
+ g.fillStyle='#000';g.fillRect(0,0,EW,H);g.fillStyle='#fff';for(let i=0;i<pts.length;i++)g.fillRect(pts[i][0],pts[i][1]*k,sz,sz);
+ g.save();shapePath(g,S.shape,cx,cy,r);g.clip();g.fillStyle='#000';g.fillRect(0,0,EW,H);g.fillStyle='#fff';const s=disp(e,d);for(let i=0;i<pts.length;i++)g.fillRect(pts[i][0]+s,pts[i][1]*k,sz,sz);g.restore()}
+let MET={canvasSizeM:[.5977,.3362],displaySizeM:[.5977,.3362],nominalViewerM:.7,source:null},INFO=null,eyeWorld=null,track='unknown',active=false,hz=null,mono=0,weave='',animT=0,lastT=0,dirty=true,lens3d=true;
+const m2v=()=>S.vdh/((MET.canvasSizeM&&MET.canvasSizeM[1])||.3362);
+function viewerM(){if(eyeWorld){const z=Math.abs((eyeWorld[0][2]+eyeWorld[1][2])/2)/m2v();return clamp(z*CAL.scale+CAL.off/100,.15,4)}return MET.nominalViewerM||.7}
+function liveIpdM(){if(eyeWorld){const a=eyeWorld[0],b=eyeWorld[1];return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])/m2v()*CAL.ipdScale}return S.ipdMM/1000}
+function ang(d){const w=(MET.canvasSizeM&&MET.canvasSizeM[0])||.5977,s=d/EW*w,i=S.ipdMM/1000,dv=viewerM(),den=1+s/i,z=den!==0?dv/den:1e6,a=2*Math.atan((i+s)/(2*dv))-2*Math.atan(i/(2*dv)),deg=a*180/Math.PI;return{s,z,deg,arcsec:deg*3600,pct:s/w*100,dpt:Math.abs(1/z-1/dv),near:s>=0,diverge:den<=0}}
+function comfort(q){const p=Math.abs(q.pct);if(q.diverge)return{t:'DIVERGENCE',c:'#ef4444',k:'bad'};if(q.near)return p<=3?{t:'COMFORT',c:'#a3e635',k:'ok'}:p<=4?{t:'CAUTION',c:'#fbbf24',k:'warn'}:{t:'EXCESS',c:'#ef4444',k:'bad'};return p<=1.5?{t:'COMFORT',c:'#a3e635',k:'ok'}:p<=2?{t:'CAUTION',c:'#fbbf24',k:'warn'}:{t:'EXCESS',c:'#ef4444',k:'bad'}}
+const canvas=$('#gl'),gl=canvas.getContext('webgl',{alpha:false,antialias:false,preserveDrawingBuffer:true}),off=document.createElement('canvas'),g2=off.getContext('2d');
+let tex=null,wall=null,handle=null,lastViews=null,lastLayer=null,monoRAF=0;
+function initGL(){const vs='attribute vec2 p;varying vec2 v;void main(){gl_Position=vec4(p,0.,1.);v=vec2(p.x*.5+.5,.5-p.y*.5);}',fs='precision mediump float;varying vec2 v;uniform sampler2D t;void main(){gl_FragColor=texture2D(t,v);}';
+ const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(o));return o};
+ const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+ const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+ const l=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
+ tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);[gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE));[gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.LINEAR))}
+function blit(){const W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;if(!W||!H)return;gl.viewport(0,0,W,H);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,off);gl.drawArrays(gl.TRIANGLES,0,3)}
+const sbsWanted=()=>active||!S.monoView;
+function sizeCanvas(){const box=$('#frame').getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);let w=Math.max(320,box.width),h=w*9/16;if(h>Math.max(180,box.height)){h=Math.max(180,box.height);w=h*16/9}
+ canvas.style.width=Math.round(w)+'px';canvas.style.height=Math.round(h)+'px';
+ let ew=Math.round(w*dpr),eh=Math.round(h*dpr);const k=Math.min(1,S.quality/eh);ew=Math.round(ew*k);eh=Math.round(eh*k);
+ let W=sbsWanted()?ew*2:ew,H=eh;const lim=gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096;if(W>lim||H>lim){const f=Math.min(lim/W,lim/H);W=Math.round(W*f);H=Math.round(H*f)}
+ if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;dirty=true}}
+function vps(){const W=gl.drawingBufferWidth||canvas.width,H=gl.drawingBufferHeight||canvas.height,out=[];
+ if(active&&lastViews&&lastLayer){for(let i=0;i<lastViews.length;i++){let r=null;try{r=lastLayer.getViewport(lastViews[i])}catch(e){}if(!r||!r.width){const hf=W/2;r={x:i?hf:0,y:0,width:hf,height:H}}let e=lastViews[i].eye==='right'?1:0;if(S.swap)e=1-e;out.push({x:r.x,y:r.y,w:r.width,h:r.height,eye:e})}
+  if(out.length===1)out.push({x:out[0].x+out[0].w,y:0,w:out[0].w,h:out[0].h,eye:out[0].eye});if(out.length)return out}
+ if(!sbsWanted())return[{x:0,y:0,w:W,h:H,eye:0}];const hf=Math.floor(W/2);return[{x:0,y:0,w:hf,h:H,eye:S.swap?1:0},{x:hf,y:0,w:W-hf,h:H,eye:S.swap?0:1}]}
+function paint(force){const t=tests[ti],anim=!S.paused&&t.animated;if(!force&&!anim&&!dirty&&!S.sceneHud)return;
+ const W=gl.drawingBufferWidth||canvas.width,H=gl.drawingBufferHeight||canvas.height;if(off.width!==W||off.height!==H){off.width=W;off.height=H}
+ g2.setTransform(1,0,0,1,0,0);g2.fillStyle='#000';g2.fillRect(0,0,W,H);
+ for(const v of vps()){curU=v.w/EW;logH=v.h/curU;g2.save();g2.translate(v.x,v.y);g2.scale(curU,curU);g2.beginPath();g2.rect(0,0,EW,logH);g2.clip();
+  try{t.draw(g2,v.eye,animT)}catch(err){g2.fillStyle='#200';g2.fillRect(0,0,EW,logH);txt(g2,'Ошибка отрисовки: '+err.message,EW/2,logH/2,26,'#f99')}
+  if(S.sceneHud){g2.fillStyle='rgba(0,0,0,.6)';g2.fillRect(0,0,EW,58*S.fontScale);txt(g2,(ti+1)+'/'+tests.length+' · '+t.name+' · d='+S.d.toFixed(1)+' · '+(viewerM()*100).toFixed(0)+'см',16,30*S.fontScale,24,'#8ff','left')}
+  g2.restore()}
+ dirty=false}
+const rig=()=>({type:'display',virtualDisplayHeight:S.vdh,ipdFactor:S.ipdFactor,parallaxFactor:S.parallax?1:0});
+function pushRig(){if(handle&&handle.setViewRig){try{handle.setViewRig(rig())}catch(e){}}}
+function step(ts){if(!lastT)lastT=ts;const dt=(ts-lastT)/1000;lastT=ts;if(!S.paused)animT+=dt*S.speed;tickSweep()}
+function onFrame(views,layer){lastViews=views;lastLayer=layer;
+ if(views.length>=2){const a=views[0].transform.position,b=views[1].transform.position;eyeWorld=[[a.x,a.y,a.z],[b.x,b.y,b.z]];if(views[0].eye==='right')eyeWorld.reverse()}
+ else if(views.length===1){const a=views[0].transform.position;eyeWorld=[[a.x-.03,a.y,a.z],[a.x+.03,a.y,a.z]]}
+ if(wall)track=wall.trackingState||'unknown';step(performance.now());paint(false);blit();readouts()}
+function monoLoop(ts){if(active)return;step(ts);paint(false);blit();readouts();monoRAF=requestAnimationFrame(monoLoop)}
+function goMono(){active=false;cancelAnimationFrame(monoRAF);sizeCanvas();paint(true);blit();monoRAF=requestAnimationFrame(monoLoop);chips()}
+let sweep=null;
+function tickSweep(){if(!sweep)return;const k=(performance.now()-sweep.t0)/sweep.dur;
+ if(k>=1){const p=PARAMS.find(x=>x.k===sweep.k);S[sweep.k]=sweep.from;applyParam(sweep.k);syncRow(sweep.k);sweep=null;const d=$('#desc_'+p.k);if(d)d.classList.remove('run');toast('Показ завершён, значение возвращено.');return}
+ const p=PARAMS.find(x=>x.k===sweep.k),tri=k<.5?k*2:(1-k)*2,v=p.min+(p.max-p.min)*tri;
+ S[sweep.k]=p.step>=1?Math.round(v):+v.toFixed(3);applyParam(sweep.k);syncRow(sweep.k)}
+function startDemo(k){const p=PARAMS.find(x=>x.k===k)||TOGGLES.find(x=>x.k===k);if(!p)return;
+ const d=$('#desc_'+k);if(d){d.classList.add('on');d.innerHTML='<b>'+p.label+'</b> — '+p.desc}
+ if(TOGGLES.some(x=>x.k===k)){S[k]=!S[k];applyParam(k);syncUI();setTimeout(()=>{S[k]=!S[k];applyParam(k);syncUI()},1400);toast('Переключатель показан: '+p.label);return}
+ if(sweep&&sweep.k===k){stopDemo();return}
+ if(!tests[ti].uses.includes(k)&&p.demo){const i=tests.findIndex(t=>t.id===p.demo);if(i>=0){setTest(i);toast('Переключился на тест «'+tests[i].name+'», чтобы показать параметр.')}}
+ sweep={k,from:S[k],t0:performance.now(),dur:5000};if(d)d.classList.add('run');
+ toast('Показ: '+p.label+' сам пройдёт от минимума к максимуму и вернётся. Esc — отменить.',5000)}
+function stopDemo(){if(!sweep)return;const p=PARAMS.find(x=>x.k===sweep.k);S[sweep.k]=sweep.from;applyParam(sweep.k);syncRow(sweep.k);const d=$('#desc_'+sweep.k);if(d)d.classList.remove('run');sweep=null}
+function applyParam(k){dirty=true;if(k==='vdh'||k==='ipdFactor'||k==='parallax')pushRig();if(k==='quality'||k==='monoView'){sizeCanvas();paint(true);blit()}save()}
+function syncRow(k){const p=PARAMS.find(x=>x.k===k);if(!p)return;const r=$('#rng_'+k),v=$('#val_'+k);if(r)r.value=S[k];if(v)v.textContent=fmt(p,S[k])}
+const fmt=(p,v)=>(p.step>=1?Math.round(v):(+v).toFixed(p.step>=.1?1:p.step>=.01?2:3))+(p.unit?' '+p.unit:'');
+function syncUI(){PARAMS.forEach(p=>syncRow(p.k));$('#selQ').value=String(S.quality);$('#selShape').value=S.shape;TOGGLES.forEach(t=>{const c=$('#tog_'+t.k);if(c)c.checked=S[t.k];const l=$('#tgl_'+t.k);if(l)l.classList.toggle('on',S[t.k])})}
+function buildControls(){let h='';
+ PARAMS.forEach(p=>{h+=`<div class="ctl" data-p="${p.k}"><div class="lab"><b>${p.label}</b><span class="val" id="val_${p.k}"></span><span class="tools"><button class="btn ico" id="rst_${p.k}" title="Заводское значение">↺</button><button class="btn ico" id="dmo_${p.k}" title="Что делает этот ползунок">?</button></span></div><input type="range" id="rng_${p.k}" min="${p.min}" max="${p.max}" step="${p.step}"><div class="pdesc" id="desc_${p.k}"></div></div>`});
+ h+=`<div class="ctl" data-p="quality"><div class="lab"><b>Качество буфера на глаз</b><span class="tools"><button class="btn ico" id="rst_quality" title="Заводское">↺</button><button class="btn ico" id="dmo_quality" title="Пояснение">?</button></span></div><select id="selQ"><option value="720">720p — быстро</option><option value="1080">1080p — стандарт</option><option value="1440">1440p — детально</option><option value="2160">2160p — для замеров разрешения</option></select><div class="pdesc" id="desc_quality"></div><div class="hint" id="bufHint"></div></div>`;
+ h+=`<div class="ctl" data-p="shape"><div class="lab"><b>Фигура стереограммы</b><span class="tools"><button class="btn ico" id="rst_shape" title="Заводское">↺</button></span></div><select id="selShape"><option value="square">Квадрат</option><option value="circle">Круг</option><option value="triangle">Треугольник</option><option value="ring">Кольцо</option><option value="E">Буква E</option></select></div>`;
+ h+='<div class="ctl"><div class="lab"><b>Переключатели</b></div><div class="row">';
+ TOGGLES.forEach(t=>{h+=`<label class="tog" id="tgl_${t.k}"><input type="checkbox" id="tog_${t.k}">${t.label}</label>`});
+ h+='</div><div class="row" style="margin-top:7px">';
+ TOGGLES.forEach(t=>{h+=`<button class="btn sm gh" id="dmo_${t.k}" title="${t.label}: пояснение">? ${t.label}</button>`});
+ h+='</div>';
+ TOGGLES.forEach(t=>{h+=`<div class="pdesc" id="desc_${t.k}"></div>`});
+ h+='</div>';
+ h+=`<div class="ctl" id="resBox" style="display:none"><div class="lab"><b>Замер разрешения</b><span class="val" id="resState"></span></div>
+  <div class="row" style="margin-bottom:6px"><button class="btn sm" data-axis="h">Гориз.</button><button class="btn sm" data-axis="v">Верт.</button><button class="btn sm" data-axis="s">Вдоль линз</button><button class="btn sm" data-axis="s90">Поперёк</button></div>
+  <div class="row"><button class="btn sm pri" id="bSee">Различаю полосы</button><button class="btn sm mag" id="bBlur">Слилось в серое</button></div>
+  <div class="row" style="margin-top:6px"><button class="btn sm" id="bResFix">Зафиксировать период</button><button class="btn sm" id="bResRestart">Заново</button><button class="btn sm" id="bResOpen">Отчёт</button></div>
+  <div class="hint">Ответ «различаю» уменьшает период, «слилось» увеличивает. После шести разворотов считается порог. Сделайте серию в 3D и в 2D (клавиша T) — получите величину потерь.</div></div>`;
+ h+=`<div class="ctl" id="acqBox" style="display:none"><div class="lab"><b>Где фигура?</b><span class="val" id="acqState"></span></div><div class="acq"><button class="btn" data-q="0">1 ↖</button><button class="btn" data-q="1">2 ↗</button><button class="btn" data-q="2">3 ↙</button><button class="btn" data-q="3">4 ↘</button></div><div class="row" style="margin-top:6px"><button class="btn sm" id="bAcqRestart">Заново</button><button class="btn sm" id="bAcqLog">Записать порог</button></div></div>`;
+ h+=`<div class="ctl" id="ovdBox" style="display:none"><div class="lab"><b>Границы дистанции</b></div><div class="row"><button class="btn sm" id="bMin">Записать MIN</button><button class="btn sm" id="bMax">Записать MAX</button></div><div class="hint" id="ovdState">Подойдите/отойдите до потери 3D и зафиксируйте границу.</div></div>`;
+ h+=`<div class="ctl"><div class="row"><button class="btn sm" id="bReset">↺ Сбросить всё</button><button class="btn sm" id="bRand">🎲 Рандом</button><button class="btn sm" id="bShot">🖼 PNG</button><button class="btn sm mag" id="bLens">Линза 2D/3D</button><button class="btn sm" id="bLink">🔗 Ссылка</button></div></div>`;
+ $('#ctrlBody').innerHTML=h;
+ PARAMS.forEach(p=>{$('#rng_'+p.k).addEventListener('input',e=>{stopDemo();S[p.k]=+e.target.value;applyParam(p.k);syncRow(p.k)});
+  $('#rst_'+p.k).onclick=()=>{stopDemo();S[p.k]=p.def;applyParam(p.k);syncRow(p.k);toast(p.label+' → заводское значение '+fmt(p,p.def))};
+  $('#dmo_'+p.k).onclick=()=>startDemo(p.k)});
+ TOGGLES.forEach(t=>{$('#tog_'+t.k).onchange=e=>{S[t.k]=e.target.checked;applyParam(t.k);syncUI()};$('#dmo_'+t.k).onclick=()=>startDemo(t.k)});
+ $('#selQ').onchange=e=>{S.quality=+e.target.value;applyParam('quality');bufHint()};
+ $('#rst_quality').onclick=()=>{S.quality=DEF.quality;applyParam('quality');syncUI();bufHint();toast('Качество буфера → 1080p')};
+ $('#dmo_quality').onclick=()=>{const d=$('#desc_quality');d.classList.toggle('on');d.innerHTML='<b>Качество буфера</b> — разрешение, в котором страница рисует картинку для одного глаза. Если буфер меньше разрешения панели, вы измеряете предел буфера, а не монитора. Для замеров разрешения ставьте 2160p.'};
+ $('#selShape').onchange=e=>{S.shape=e.target.value;applyParam('shape')};
+ $('#rst_shape').onclick=()=>{S.shape=DEF.shape;applyParam('shape');syncUI()};
+ $$('#resBox [data-axis]').forEach(b=>b.onclick=()=>{RES.axis=b.dataset.axis;resRestart();toast('Ось: '+axisName(RES.axis))});
+ $('#bSee').onclick=()=>resAnswer(true);$('#bBlur').onclick=()=>resAnswer(false);
+ $('#bResFix').onclick=()=>resSave(RES.p);$('#bResRestart').onclick=resRestart;$('#bResOpen').onclick=()=>{resReport();openM('#mRes')};
+ $$('#acqBox [data-q]').forEach(b=>b.onclick=()=>acqAnswer(+b.dataset.q));
+ $('#bAcqRestart').onclick=acqRestart;$('#bAcqLog').onclick=()=>logAdd('Порог стереоостроты',Math.abs(ang(AC.threshold||AC.d).arcsec).toFixed(0)+' arcsec',$('#logNote').value.trim());
+ $('#bMin').onclick=()=>{ovd.min=viewerM()*100;$('#ovdState').textContent='MIN '+ovd.min.toFixed(1)+' см · MAX '+(ovd.max?ovd.max.toFixed(1)+' см':'—');logAdd('Граница MIN',ovd.min.toFixed(1)+' см','')};
+ $('#bMax').onclick=()=>{ovd.max=viewerM()*100;$('#ovdState').textContent='MIN '+(ovd.min?ovd.min.toFixed(1)+' см':'—')+' · MAX '+ovd.max.toFixed(1)+' см';logAdd('Граница MAX',ovd.max.toFixed(1)+' см','')};
+ $('#bReset').onclick=resetAll;$('#bRand').onclick=randomize;$('#bShot').onclick=shot;$('#bLens').onclick=toggleLens;
+ $('#bLink').onclick=()=>{url();navigator.clipboard?.writeText(location.href).then(()=>toast('Ссылка на тест скопирована')).catch(()=>toast(location.href))}}
+function bufHint(){const r=bufReady();$('#bufHint').innerHTML='Буфер на глаз: <b>'+r.have+' px</b>, панель под сценой: <b>'+r.need+' px</b>. '+(r.ok?'Достаточно для замера.':'Мало — увеличьте качество или разверните сцену на весь экран.')}
+function resRestart(){RES.p=8;RES.n=0;RES.last=null;RES.rev=[];RES.done=false;RES.th=null;dirty=true;resUI()}
+function resAnswer(see){const right=see;if(RES.last!==null&&right!==RES.last)RES.rev.push(RES.p);RES.last=right;RES.n++;
+ RES.p=clamp(see?RES.p/1.25:RES.p*1.25,1,40);
+ if(RES.rev.length>=6||RES.n>=24){const th=Math.exp(RES.rev.reduce((a,b)=>a+Math.log(b),0)/Math.max(1,RES.rev.length));RES.done=true;RES.th=th;resSave(th);toast('Порог найден: '+th.toFixed(2)+' px панели. Сохранён в отчёт.',6000)}
+ dirty=true;resUI()}
+function resSave(p){const key=(lens3d?'3d':'2d')+':'+RES.axis,size=RES.axis==='v'?panelH():panelW();
+ RES.results[key]={p:+p.toFixed(3),eff:Math.round(2*size/p),mode:lens3d?'3d':'2d',axis:RES.axis,at:new Date().toISOString()};
+ logAdd('Порог разрешения '+axisName(RES.axis)+' ('+(lens3d?'3D':'2D')+')',p.toFixed(2)+' px → ≈'+Math.round(2*size/p)+' px по оси',$('#logNote').value.trim());resUI();resReport()}
+function resUI(){const el=$('#resState');if(el)el.textContent=RES.p.toFixed(2)+' px · '+RES.n+' отв.';bufHint()}
+function acqRestart(){AC.d=16;AC.n=0;AC.ok=0;AC.rev=[];AC.last=null;AC.done=false;AC.threshold=null;AC.q=Math.floor(Math.random()*4);dirty=true;acqUI()}
+function acqAnswer(q){if(tests[ti].id!=='acuity'||AC.done)return;const right=q===AC.q;AC.n++;if(right)AC.ok++;if(AC.last!==null&&right!==AC.last)AC.rev.push(AC.d);AC.last=right;
+ AC.d=clamp(right?AC.d/1.35:AC.d*1.35,.05,120);AC.q=Math.floor(Math.random()*4);
+ if(AC.rev.length>=6||AC.n>=30){AC.done=true;AC.threshold=AC.rev.length?Math.exp(AC.rev.reduce((a,b)=>a+Math.log(b),0)/AC.rev.length):AC.d;toast('Порог: '+Math.abs(ang(AC.threshold).arcsec).toFixed(0)+' arcsec',6000)}
+ dirty=true;acqUI()}
+function acqUI(){const el=$('#acqState');if(el)el.textContent=AC.done?('порог ≈'+Math.abs(ang(AC.threshold||AC.d).arcsec).toFixed(0)+'″'):(Math.abs(ang(AC.d).arcsec).toFixed(0)+'″ · '+AC.ok+'/'+AC.n)}
+function resetAll(){stopDemo();S={...DEF};applyParam('quality');syncUI();toast('Все параметры возвращены к заводским значениям')}
+function randomize(){const t=tests[ti];if(t.uses.includes('period'))S.period=+(1+Math.random()*14).toFixed(1);if(t.uses.includes('angle'))S.angle=+(Math.random()*180).toFixed(1);
+ if(t.uses.includes('d'))S.d=+((Math.random()*2-1)*120).toFixed(1);if(t.uses.includes('density'))S.density=Math.round(1500+Math.random()*9000);
+ if(t.uses.includes('lensPitch'))S.lensPitch=+(2+Math.random()*10).toFixed(1);applyParam('d');syncUI();toast('Параметры перемешаны')}
+function shot(){try{const a=document.createElement('a');a.href=off.toDataURL('image/png');a.download='lenticular-'+tests[ti].id+'.png';a.click();toast('Сохранён PNG текущей SBS-пары')}catch(e){toast('Снимок недоступен: '+e.message)}}
+function toggleLens(){if(!handle||!handle.setStereoEnabled){toast('Переключение линзы доступно только в DisplayXR');return}
+ lens3d=!lens3d;handle.setStereoEnabled(lens3d).then(()=>{toast(lens3d?'Панель: 3D':'Панель: 2D — линза выключена');resUI()}).catch(e=>{lens3d=!lens3d;toast('Не удалось переключить: '+(e.message||e))})}
+const ovd={min:null,max:null},spark=$('#spark'),sg=spark.getContext('2d'),hist=[];
+function drawSpark(){const W=spark.width,H=spark.height;sg.fillStyle='#090e1a';sg.fillRect(0,0,W,H);if(hist.length<2)return;
+ const mn=Math.min(...hist)-3,mx=Math.max(...hist)+3,rg=Math.max(6,mx-mn);sg.strokeStyle='#233052';sg.lineWidth=1;
+ for(let i=1;i<4;i++){const y=H*i/4;sg.beginPath();sg.moveTo(0,y);sg.lineTo(W,y);sg.stroke()}
+ sg.strokeStyle='#22d3ee';sg.lineWidth=2;sg.beginPath();hist.forEach((v,i)=>{const x=i/(hist.length-1)*W,y=H-(v-mn)/rg*H;i?sg.lineTo(x,y):sg.moveTo(x,y)});sg.stroke();
+ const nom=(MET.nominalViewerM||.7)*100;if(nom>mn&&nom<mx){const y=H-(nom-mn)/rg*H;sg.strokeStyle='#fbbf24';sg.setLineDash([5,5]);sg.beginPath();sg.moveTo(0,y);sg.lineTo(W,y);sg.stroke();sg.setLineDash([])}
+ sg.font='12px ui-monospace,monospace';sg.fillStyle='#a3aec8';sg.fillText('дистанция, см',7,15);sg.fillStyle='#22d3ee';sg.fillText(hist[hist.length-1].toFixed(0),W-34,15)}
+let lastRO=0;
+function readouts(){const n=performance.now();if(n-lastRO<120)return;lastRO=n;const q=ang(S.d),c=comfort(q);
+ $('#fD').textContent=S.d.toFixed(1)+'px';$('#fAng').textContent=q.deg.toFixed(2)+'° / '+Math.abs(q.arcsec).toFixed(0)+'″';$('#fPct').textContent=q.pct.toFixed(2)+'%';
+ $('#fZ').textContent=(q.z>0&&q.z<50?(q.z*100).toFixed(0)+'см':'∞');const fc=$('#fComfort');fc.textContent=c.t;fc.className='badge '+c.k;
+ hist.push(viewerM()*100);if(hist.length>170)hist.shift();drawSpark();chips();if($('#mDist').classList.contains('on'))distKV()}
+function chips(){$('#cMode').innerHTML='<span class="dot '+(active?(track==='tracking'?'live':'search'):'')+'"></span><b>'+(active?'3D inline':'2D fallback')+'</b>';
+ $('#cTrack').innerHTML='track <b>'+track+'</b>';$('#cDist').innerHTML='глаза <b>'+(viewerM()*100).toFixed(1)+' см</b>'+(eyeWorld?'':' <span style="color:#fbbf24">ном.</span>');
+ $('#cIpd').innerHTML='IPD <b>'+(liveIpdM()*1000).toFixed(1)+' мм</b>';$('#cBuf').innerHTML='buf <b>'+(gl.drawingBufferWidth||0)+'×'+(gl.drawingBufferHeight||0)+'</b>';
+ $('#cHz').innerHTML='Hz <b>'+(hz?Math.round(hz):'—')+'</b> mono <b>'+mono+'</b>'+(weave&&weave!=='woven'?' <span style="color:#fbbf24">'+weave+'</span>':'')}
+function renderList(){const q=query.toLowerCase(),arr=tests.map((t,i)=>({t,i})).filter(o=>(cat==='all'||o.t.cat===cat)&&(!q||(o.t.name+' '+o.t.en+' '+o.t.help).toLowerCase().includes(q)));
+ $('#tCount').textContent=arr.length+'/'+tests.length;
+ $('#tlist').innerHTML=arr.map(o=>`<button class="titem ${o.i===ti?'on':''}" data-i="${o.i}"><span class="tnum">${String(o.i+1).padStart(2,'0')}</span><span class="tname">${o.t.name}<i>${o.t.en}</i></span></button>`).join('')||'<div class="empty">Ничего не найдено</div>';
+ $$('#tlist .titem').forEach(b=>b.onclick=()=>{setTest(+b.dataset.i);if(innerWidth<=1180)$('#dock').classList.remove('open')})}
+function renderCats(){$('#cats').innerHTML=['all',...Object.keys(CATS)].map(c=>`<button class="cat ${c===cat?'on':''}" data-c="${c}">${c==='all'?'Все':CATS[c]}</button>`).join('');
+ $$('#cats .cat').forEach(b=>b.onclick=()=>{cat=b.dataset.c;renderCats();renderList()})}
+function setTest(i){stopDemo();ti=clamp(i,0,tests.length-1);const t=tests[ti];dirty=true;
+ $('#sName').textContent=(ti+1)+'. '+t.name;$('#sEn').textContent=t.en;$('#sHelp').textContent=t.help;
+ $('#acqBox').style.display=t.id==='acuity'?'':'none';$('#ovdBox').style.display=t.id==='ovd'?'':'none';$('#resBox').style.display=t.id==='res-measure'?'':'none';
+ $$('.ctl[data-p]').forEach(c=>c.classList.toggle('rel',t.uses.includes(c.dataset.p)));
+ renderList();infoFill();acqUI();resUI();url();save()}
+function infoFill(){const t=tests[ti];$('#iTitle').textContent=(ti+1)+'. '+t.name+' · '+t.en;
+ $('#iBody').innerHTML=`<div class="note">${t.help}</div><h3>Зачем</h3><p>${t.info.why}</p><h3>Как читать</h3><p>${t.info.how}</p><h3>Физика</h3><p>${t.info.phys}</p><h3>Задействованные параметры</h3><p>${t.uses.length?t.uses.map(u=>'<span class="badge">'+u+'</span>').join(' '):'не требуются'}</p><h3>Источники</h3><div class="links">${t.info.links.map(linkHTML).join('')}</div>`}
+function url(){const p=new URLSearchParams();p.set('test',tests[ti].id);p.set('d',S.d);p.set('fs',S.fontScale);history.replaceState(null,'','?'+p.toString())}
+function deep(){const p=new URLSearchParams(location.search),id=p.get('test');if(id){const i=tests.findIndex(t=>t.id===id);if(i>=0)ti=i}
+ if(p.get('d')&&!isNaN(+p.get('d')))S.d=clamp(+p.get('d'),-400,400);if(p.get('fs')&&!isNaN(+p.get('fs')))S.fontScale=clamp(+p.get('fs'),.8,3)}
+function logAdd(metric,value,note){LOG.unshift({t:new Date().toISOString(),test:tests[ti].name,metric,value,note:note||'',dist:+(viewerM()*100).toFixed(1),ipd:S.ipdMM});if(LOG.length>400)LOG.pop();renderLog();save();toast('Записано в журнал')}
+function renderLog(){$('#logCount').textContent=LOG.length+' записей';
+ $('#logBody').innerHTML=LOG.length?`<table><thead><tr><th>Время</th><th>Тест</th><th>Что</th><th>Значение</th><th>Дист.</th><th>Заметка</th><th></th></tr></thead><tbody>${LOG.map((r,i)=>`<tr><td>${new Date(r.t).toLocaleTimeString()}</td><td>${r.test}</td><td>${r.metric}</td><td class="v">${r.value}</td><td>${r.dist} см</td><td>${r.note||''}</td><td><button class="btn sm gh" data-del="${i}">✕</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Журнал пуст. Нажмите «＋ Записать текущее» или клавишу L.</div>';
+ $$('#logBody [data-del]').forEach(b=>b.onclick=()=>{LOG.splice(+b.dataset.del,1);renderLog();save()})}
+function resFactors(){const h=RES.results['3d:h'],v=RES.results['3d:v'];return{fh:h?2/h.p:Math.SQRT1_2,fv:v?2/v.p:Math.SQRT1_2,measured:!!(h&&v)}}
+function resReport(){const f=resFactors(),pw=panelW(),ph=panelH(),wm=(MET.displaySizeM&&MET.displaySizeM[0])||.5977,dist=viewerM(),lim=gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096;
+ const rows=Object.entries(RES.results).map(([k,r])=>`<tr><td>${r.mode.toUpperCase()}</td><td>${axisName(r.axis)}</td><td class="v">${r.p.toFixed(2)} px</td><td class="v">≈${r.eff} px</td><td>${new Date(r.at).toLocaleTimeString()}</td></tr>`).join('');
+ const panels=[['Ваш монитор',pw,ph,wm],['4K UHD 27″ (G90XF)',3840,2160,.5977],['6K 32″ (G90XH, анонс)',6144,3456,.7084],['8K UHD (гипотеза)',7680,4320,.5977],['16K (гипотеза)',15360,8640,.5977]];
+ const tbl=panels.map(p=>{const[n,w,h,sw]=p,mp=w*h/1e6,ppd2=w/sw*dist*Math.PI/180,ppd3=ppd2*f.fh,effW=Math.round(w*f.fh),effH=Math.round(h*f.fv);
+  const verdict=ppd3>=75?'с запасом':ppd3>=58?'на пределе глаза':'ниже предела глаза';
+  const cls=ppd3>=75?'ok':ppd3>=58?'warn':'bad';
+  return`<tr><td>${n}</td><td class="v">${w}×${h}</td><td class="v">${mp.toFixed(1)} МП</td><td class="v">${(mp/2).toFixed(1)} МП</td><td class="v">${effW}×${effH}</td><td class="v">${ppd2.toFixed(0)}</td><td class="v">${ppd3.toFixed(0)}</td><td><span class="badge ${cls}">${verdict}</span></td></tr>`}).join('');
+ $('#resBody').innerHTML=`
+ <div class="note ${f.measured?'ok':'warn'}">${f.measured?'Коэффициенты взяты из ваших замеров.':'Пока используется теоретическая оценка 1/√2 ≈ 0.707 по каждой оси. Пройдите тест «Реальное разрешение» по горизонтали и вертикали в 3D — цифры станут вашими.'}</div>
+ <h3>Что теряется при переходе в стерео</h3>
+ <p>Панель отдаёт каждому глазу примерно половину пикселей: <b>${(pw*ph/1e6).toFixed(1)} МП → ${(pw*ph/2e6).toFixed(1)} МП на глаз</b>. Наклонная решётка распределяет потерю между осями, поэтому по каждой оси остаётся около 70% линейного разрешения, а не 50%. Ваши измеренные коэффициенты: горизонталь <b>${(f.fh*100).toFixed(0)}%</b>, вертикаль <b>${(f.fv*100).toFixed(0)}%</b>.</p>
+ <div class="kv"><b>Эффективно на глаз</b><span>${Math.round(pw*f.fh)}×${Math.round(ph*f.fv)} px</span><b>Это ${(f.fh*f.fv*100).toFixed(0)}% площади панели</b><span>эквивалент ${(pw*f.fh/1920).toFixed(2)}× от 1920 по ширине</span><b>Предел текстуры WebGL</b><span>${lim} px (SBS-буфер = 2× ширина глаза)</span></div>
+ <h3>Ваши замеры</h3>${rows?`<table><thead><tr><th>Режим</th><th>Ось</th><th>Порог</th><th>Эквивалент</th><th>Когда</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty">Замеров пока нет. Откройте тест «Реальное разрешение (замер)».</div>'}
+ <h3>Хватит ли разрешения на 8K и 16K</h3>
+ <p>Ключевая величина — <b>пикселей на градус (PPD)</b> при вашей дистанции ${(dist*100).toFixed(0)} см. Предел здорового глаза ≈ 60 PPD (одна угловая минута). Всё, что выше, глаз уже не различает как отдельные пиксели.</p>
+ <table><thead><tr><th>Панель</th><th>Пиксели</th><th>Всего</th><th>На глаз</th><th>Эффективно в 3D</th><th>PPD 2D</th><th>PPD 3D</th><th>Вердикт</th></tr></thead><tbody>${tbl}</tbody></table>
+ <div class="note ok" style="margin-top:13px"><b>Ответ:</b> на 4K в стерео вы примерно на границе возможностей глаза, поэтому решётка и мелкий текст заметны. 8K в стерео даёт эффективно около 4K на глаз и уже перекрывает предел глаза с запасом — пиксельная структура исчезает. 16K в стерео даёт около 8K на глаз: разрешение перестаёт быть ограничением, останутся crosstalk, яркость и качество самой оптики.</div>
+ <h3>Практические ограничения будущих панелей</h3><ul>
+ <li><b>Буфер сцены.</b> SBS требует вдвое большей ширины: для 16K это 30720 px при типичном лимите текстуры ${lim} px. Стенд автоматически масштабирует буфер и показывает реальный размер в шапке.</li>
+ <li><b>Полоса пропускания.</b> 16K при 120 Гц — это десятки гигабит в секунду; понадобится DP 2.1 UHBR20 или сжатие.</li>
+ <li><b>Трекинг важнее пикселей.</b> При росте разрешения ошибка позиции глаз и задержка начинают ограничивать качество сильнее, чем сама решётка.</li>
+ <li><b>Металинзы.</b> Работа Samsung и POSTECH в Nature показывает путь к тонкой оптике с широким углом — это снимает часть нынешних ограничений зоны просмотра.</li></ul>
+ <h3>Источники</h3><div class="links">${['boev','owl','wiki','g90xh','meta','spie','sur'].map(linkHTML).join('')}</div>`}
+function md(){let s='# Lenticular Lab — журнал\n\nПанель: '+panelW()+'×'+panelH()+' · IPD '+S.ipdMM+' мм · дистанция '+(viewerM()*100).toFixed(1)+' см · шрифт ×'+S.fontScale+' · калибровка ×'+CAL.scale.toFixed(3)+'\n\n';
+ const f=resFactors();s+='Эффективное разрешение в 3D: '+Math.round(panelW()*f.fh)+'×'+Math.round(panelH()*f.fv)+' px ('+(f.measured?'по замерам':'оценка 1/√2')+')\n\n';
+ const rk=Object.entries(RES.results);if(rk.length){s+='## Замеры разрешения\n\n| Режим | Ось | Порог, px | Эквивалент, px |\n|---|---|---|---|\n';rk.forEach(([k,r])=>{s+='| '+r.mode+' | '+axisName(r.axis)+' | '+r.p.toFixed(2)+' | '+r.eff+' |\n'});s+='\n'}
+ s+='## Журнал\n\n| Время | Тест | Что | Значение | Дистанция | Заметка |\n|---|---|---|---|---|---|\n';
+ LOG.forEach(r=>{s+='| '+new Date(r.t).toLocaleString()+' | '+r.test+' | '+r.metric+' | '+r.value+' | '+r.dist+' см | '+(r.note||'')+' |\n'});return s}
+function dl(n,t,ty){const b=new Blob([t],{type:ty||'text/plain;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function distKV(){const raw=eyeWorld?Math.abs((eyeWorld[0][2]+eyeWorld[1][2])/2):null;
+ $('#distKV').innerHTML=[['Сырое z (вирт. ед.)',raw!==null?raw.toFixed(4):'нет трекинга'],['m2v',m2v().toFixed(4)],['Высота canvas, м',((MET.canvasSizeM&&MET.canvasSizeM[1])||0).toFixed(4)],['После пересчёта, см',raw!==null?(raw/m2v()*100).toFixed(1):'—'],['Масштаб калибровки','×'+CAL.scale.toFixed(4)],['Поправка нуля, см',CAL.off.toFixed(1)],['Итог, см',(viewerM()*100).toFixed(1)],['IPD живое, мм',(liveIpdM()*1000).toFixed(1)],['IPD принятое, мм',S.ipdMM.toFixed(1)],['Номинал панели, см',((MET.nominalViewerM||0)*100).toFixed(1)],['Трекинг',track]].map(r=>'<b>'+r[0]+'</b><span>'+r[1]+'</span>').join('')}
+const openM=id=>{$(id).classList.add('on');if(id==='#mDist')distKV();if(id==='#mRes')resReport()};
+const closeM=()=>$$('.modal').forEach(m=>m.classList.remove('on'));
+function photo(on){document.body.classList.toggle('photo',on);setTimeout(()=>{sizeCanvas();paint(true);blit();bufHint()},70);if(on)toast('Фото-режим. Выход — H, Esc или двойной клик по сцене.',4200)}
+function toggleFS(){if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(e=>toast('Fullscreen: '+e.message))}
+function logCurrent(){const t=tests[ti],q=ang(S.d),note=$('#logNote').value.trim();
+ if(t.id==='res-measure'){resSave(RES.th||RES.p);return}
+ if(t.id==='ovd'){logAdd('Дистанция',(viewerM()*100).toFixed(1)+' см',note);return}
+ if(t.id==='acuity'){logAdd('Порог стереоостроты',Math.abs(ang(AC.threshold||AC.d).arcsec).toFixed(0)+' arcsec',note);return}
+ if(t.cat==='xt'||t.id==='luminance'){logAdd('Условие замера','уровень '+Math.round(S.level)+' · '+(lens3d?'3D':'2D'),note);return}
+ logAdd('Параллакс',S.d.toFixed(2)+' px = '+q.deg.toFixed(3)+'° = '+Math.abs(q.arcsec).toFixed(0)+'″ = '+q.pct.toFixed(2)+'%',note)}
+function library(){const g=[['Основы',['owl','owllf','cur','wiki','wikil']],['Samsung официально',['sam','meta','g90xh','samhow']],['Измерения и наука',['shib','sony','spie','moire','sur','boev','proj']],['Стереозрение',['rds','ast']],['Софт и стандарты',['dxr','auth','woven','mdn']],['Сообщество',['ixbt']]];
+ $('#libBody').innerHTML=g.map(x=>'<h3>'+x[0]+'</h3><div class="links">'+x[1].map(linkHTML).join('')+'</div>').join('');
+ $('#distLinks').innerHTML=['sam','auth','shib','samhow'].map(linkHTML).join('')}
+function bindStatic(){
+ $('#q').oninput=e=>{query=e.target.value;renderList()};
+ $('#bInfo').onclick=()=>openM('#mInfo');$('#bHelp').onclick=()=>openM('#mHelp');$('#bLib').onclick=()=>openM('#mLib');$('#bDist').onclick=()=>openM('#mDist');$('#bRes').onclick=()=>openM('#mRes');
+ $$('[data-close]').forEach(b=>b.onclick=closeM);$$('.modal').forEach(m=>m.onclick=e=>{if(e.target===m)closeM()});
+ $('#bFs').onclick=toggleFS;$('#bPhoto').onclick=()=>photo(!document.body.classList.contains('photo'));
+ $('#bDock').onclick=()=>$('#dock').classList.toggle('open');$('#bCtrl').onclick=()=>$('#ctrl').classList.toggle('open');
+ $('#bLog').onclick=logCurrent;$('#bCopyMd').onclick=()=>navigator.clipboard?.writeText(md()).then(()=>toast('Markdown скопирован')).catch(()=>dl('measurements.md',md(),'text/markdown'));
+ $('#bExpMd').onclick=()=>dl('lenticular-measurements.md',md(),'text/markdown;charset=utf-8');
+ $('#bExpJson').onclick=()=>dl('lenticular-measurements.json',JSON.stringify({settings:S,calibration:CAL,metrics:MET,resolution:RES.results,log:LOG},null,2),'application/json');
+ $('#bClear').onclick=()=>{if(LOG.length&&confirm('Очистить журнал?')){LOG=[];renderLog();save()}};
+ $('#bCalDo').onclick=()=>{const ref=+$('#calRef').value;if(!(ref>10)){toast('Введите дистанцию в см');return}if(!eyeWorld){toast('Нет живого трекинга');return}
+  const raw=Math.abs((eyeWorld[0][2]+eyeWorld[1][2])/2)/m2v()*100;CAL.scale=clamp(ref/raw,.2,5);CAL.ref=ref;save();distKV();toast('Масштаб откалиброван: ×'+CAL.scale.toFixed(3))};
+ $('#bCalOff').onclick=()=>{CAL.off=clamp(+$('#calOff').value||0,-30,30);save();distKV();toast('Поправка нуля: '+CAL.off+' см')};
+ $('#bCalReset').onclick=()=>{CAL={scale:1,off:0,ipdScale:1,ref:null};$('#calOff').value=0;save();distKV();toast('Калибровка сброшена')};
+ document.addEventListener('fullscreenchange',()=>{$('#bFs').textContent=document.fullscreenElement?'⛶ Выйти':'⛶ Полный экран';setTimeout(()=>{sizeCanvas();paint(true);blit();bufHint()},90)});
+ canvas.addEventListener('dblclick',()=>{if(document.body.classList.contains('photo'))photo(false);else toggleFS()});
+ addEventListener('keydown',e=>{const k=e.key,t=tests[ti];
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'){if(k==='Escape')e.target.blur();return}
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k))e.preventDefault();
+  if(k==='Escape'){if(sweep){stopDemo();toast('Показ отменён');return}if($('.modal.on'))closeM();else if(document.body.classList.contains('photo'))photo(false);return}
+  if(t.id==='acuity'&&/^[1-4]$/.test(k)){acqAnswer(+k-1);return}
+  const f=e.shiftKey?.1:1;
+  if(k==='ArrowRight')setTest(ti+1>=tests.length?0:ti+1);
+  else if(k==='ArrowLeft')setTest(ti-1<0?tests.length-1:ti-1);
+  else if(k==='ArrowUp'){S.d=clamp(+(S.d+2*f).toFixed(2),-400,400);applyParam('d');syncRow('d')}
+  else if(k==='ArrowDown'){S.d=clamp(+(S.d-2*f).toFixed(2),-400,400);applyParam('d');syncRow('d')}
+  else if(k===','){S.period=clamp(+(S.period-.5*f).toFixed(2),1,24);applyParam('period');syncRow('period')}
+  else if(k==='.'){S.period=clamp(+(S.period+.5*f).toFixed(2),1,24);applyParam('period');syncRow('period')}
+  else if(/^[0-9]$/.test(k))setTest(k==='0'?9:+k-1);
+  else if(k==='s'||k==='S'||k==='ы'){S.swap=!S.swap;applyParam('swap');syncUI()}
+  else if(k==='t'||k==='T'||k==='е')toggleLens();
+  else if(k==='p'||k==='P'||k==='з'){S.parallax=!S.parallax;applyParam('parallax');syncUI()}
+  else if(k==='q'||k==='Q'||k==='й'){const o=[720,1080,1440,2160];S.quality=o[(o.indexOf(S.quality)+1)%4];applyParam('quality');syncUI();bufHint();toast('Буфер на глаз: '+S.quality+'p')}
+  else if(k==='h'||k==='H'||k==='р')photo(!document.body.classList.contains('photo'));
+  else if(k==='f'||k==='F'||k==='а')toggleFS();
+  else if(k==='l'||k==='L'||k==='д')logCurrent();
+  else if(k==='i'||k==='I'||k==='ш')openM('#mInfo');
+  else if(k==='r'||k==='R'||k==='к')resetAll();
+  else if(k==='?')openM('#mHelp');
+  else if(k===' '){S.paused=!S.paused;applyParam('paused');syncUI()}});
+ new ResizeObserver(()=>{sizeCanvas();paint(true);blit();bufHint()}).observe($('#frame'));
+ addEventListener('resize',()=>{sizeCanvas();paint(true);blit()})}
+(async()=>{
+ buildControls();bindStatic();deep();library();renderCats();renderList();renderLog();syncUI();setTest(ti);acqRestart();resRestart();
+ $('#calRef').value=CAL.ref||70;$('#calOff').value=CAL.off||0;
+ if(!gl){toast('WebGL недоступен',9000);return}
+ initGL();sizeCanvas();paint(true);blit();bufHint();
+ await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+ let SDK=null;try{SDK=await import(CDN)}catch(e){toast('SDK не загрузился — работаю в 2D. '+e,7000)}
+ if(SDK&&SDK.createInline3D){try{
+  wall=await SDK.createInline3D();
+  if(wall&&wall.supported){
+   handle=wall.addScene(canvas,onFrame,{virtualDisplayHeight:S.vdh,rectCover:'auto',bufferClamped:true,onResize:()=>{sizeCanvas();paint(true);blit();bufHint()},onLayerLost:()=>{goMono();toast('3D-слой закрыт — переход в 2D')}});
+   active=true;pushRig();chips();
+   if(handle.firstWoven)handle.firstWoven.then(async()=>{try{MET=await handle.displayMetrics()}catch(e){}try{INFO=await handle.getDisplayInfo()}catch(e){}
+    sizeCanvas();paint(true);blit();bufHint();distKV();resReport();toast('3D активен. Крупный шрифт включён; тест «Реальное разрешение» покажет потери.',7000)});
+   if(handle.on)handle.on('trackingstatechange',s=>{track=s;chips()});
+   setInterval(async()=>{try{const st=handle.stats();hz=st.displayHz;mono=st.monoFrames;weave=handle.wovenState||''}catch(e){}},700);
+   setInterval(async()=>{try{MET=await handle.displayMetrics()}catch(e){}},6000);
+  }else goMono()}catch(e){goMono();toast('inline-3D недоступен: '+(e.message||e),7000)}}
+ if(!active){goMono();toast('2D-режим: откройте в DisplayXR Browser на 3D-панели. Все параметры и журнал работают.',7000)}
+})();
+</script></body></html>
