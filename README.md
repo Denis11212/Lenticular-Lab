@@ -211,6 +211,8 @@ Lenticular Lab  →  середина между глазами ÷ масшта�
 index.html?test=res-measure&d=40&fs=1.6
 ```
 
+А значит https://denis11212.github.io/Lenticular-Lab/sbs-tests-dxr.html?test=res-measure&d=40&fs=1.6 перекинет в этот раздел.
+
 | Параметр | Значение |
 |---|---|
 | `test` | Идентификатор теста (`eye-split`, `xt-window`, `res-measure`, `rds`, …) |
